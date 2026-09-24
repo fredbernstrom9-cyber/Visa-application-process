@@ -1,7 +1,8 @@
-/* ClearEntry: checker, compare view, change log and routing. No dependencies. */
+/* ClearEntry: checker, per-result citations, compare view, change log and routing. No dependencies. */
 (function () {
   "use strict";
   var D = window.CE_DATA;
+  var EMB = window.CE_EMB || {};
   var STORE_KEY = "clearentry:v1";
 
   /* ---------- helpers ---------- */
@@ -22,23 +23,43 @@
   }
   function load() { try { return JSON.parse(localStorage.getItem(STORE_KEY) || "{}"); } catch (e) { return {}; } }
   function save(obj) { try { localStorage.setItem(STORE_KEY, JSON.stringify(obj)); } catch (e) { /* storage unavailable */ } }
+  function uniq(a) { return a.filter(function (x, i) { return a.indexOf(x) === i; }); }
   var CONF_LABEL = { official: "Official source", multi: "2+ sources", check: "Verify" };
   function conf(c) { return c ? '<span class="conf ' + c + '" title="' + esc(CONF_LABEL[c]) + '">' + esc(CONF_LABEL[c]) + "</span>" : ""; }
+  function link(label, url) { return '<a href="' + esc(url) + '" target="_blank" rel="noopener">' + esc(label) + "</a>"; }
+
+  /* APA 7 style reference text for a source: Publisher. (Date). Title. URL */
+  function apa(s) {
+    var end = /[.?!]$/.test(s.title) ? " " : ". ";
+    return esc(s.pub) + (/\.$/.test(s.pub) ? " (" : ". (") + esc(s.date) + "). <i>" + esc(s.title) + "</i>" + end;
+  }
 
   var ORIGIN = {}; D.ORIGINS.forEach(function (o) { ORIGIN[o.code] = o; });
   var BASIC = {}; D.BASIC.forEach(function (b) { BASIC[b.code] = b; });
   var FULL_ORDER = ["FRA", "DEU", "NLD", "ESP", "ITA", "IRL", "POL", "SWE"];
-  function destName(code) { return D.DEST[code] ? D.DEST[code].name : (BASIC[code] ? BASIC[code].name : code); }
+  function destObj(code) { return D.DEST[code] || BASIC[code]; }
+
+  /* ---------- citations: numbered in order of first use within one result ---------- */
+  var refs = [], refNum = {};
+  function resetRefs() { refs = []; refNum = {}; }
+  function cite(ids) {
+    ids = uniq([].concat(ids || [])).filter(function (k) { return D.SOURCES[k]; });
+    if (!ids.length) return "";
+    return ' <sup class="cites">[' + ids.map(function (k) {
+      if (!refNum[k]) { refs.push(k); refNum[k] = refs.length; }
+      var s = D.SOURCES[k];
+      return '<a href="#ref-' + refNum[k] + '" title="' + esc(s.pub + ": " + s.title) + '">' + refNum[k] + "</a>";
+    }).join(", ") + "]</sup>";
+  }
 
   /* ---------- state ---------- */
   var saved = load();
   var state = {
     origin: ORIGIN[saved.origin] ? saved.origin : "IND",
-    dest: (D.DEST[saved.dest] || BASIC[saved.dest]) ? saved.dest : "FRA",
+    dest: destObj(saved.dest) ? saved.dest : "FRA",
     purpose: saved.purpose === "short" ? "short" : "study"
   };
   var checks = saved.checks || {};
-
   function persist() { save({ origin: state.origin, dest: state.dest, purpose: state.purpose, checks: checks }); }
 
   /* ---------- selectors ---------- */
@@ -47,7 +68,9 @@
     var groups = {};
     D.ORIGINS.forEach(function (o) { (groups[o.group] = groups[o.group] || []).push(o); });
     os.innerHTML = Object.keys(groups).map(function (g) {
-      return '<optgroup label="' + esc(g) + '">' + groups[g].map(function (o) {
+      var list = groups[g].slice();
+      if (g !== "Most requested") list.sort(function (a, b) { return a.name.localeCompare(b.name); });
+      return '<optgroup label="' + esc(g) + '">' + list.map(function (o) {
         return '<option value="' + o.code + '">' + esc(o.name) + "</option>";
       }).join("") + "</optgroup>";
     }).join("");
@@ -74,227 +97,326 @@
     $("#mrz").textContent = l1 + "\n" + l2;
   }
 
-  /* ---------- rule resolution ---------- */
+  /* ---------- rule resolution ----------
+   * Every text item is { text, src } so the renderer can attach numbered citations. */
   function resolve() {
     var o = ORIGIN[state.origin];
     var code = state.dest;
-    var d = D.DEST[code];
-    var b = BASIC[code];
-    var schengen = d ? d.schengen : b.schengen;
-    var r = { o: o, code: code, name: destName(code), schengen: schengen, full: !!d, purpose: state.purpose };
-
-    if (state.purpose === "short") return resolveShort(r);
-    if (d) return resolveStudyFull(r, d);
-    return resolveStudyBasic(r, b);
+    var d = D.DEST[code], b = BASIC[code];
+    var r = { o: o, code: code, dest: d || b, name: (d || b).name, schengen: (d || b).schengen, full: !!d, purpose: state.purpose };
+    if (state.purpose === "short") resolveShort(r);
+    else if (d) resolveStudyFull(r, d);
+    else resolveStudyBasic(r, b);
+    addOriginNotes(r);
+    return r;
   }
 
-  function recentChange(code) {
-    var cutoff = "2025-09";
-    return D.CHANGES.filter(function (c) { return c.where === code && c.date >= cutoff; });
+  function originNotes(o, purpose, code) {
+    return o.notes.filter(function (n) {
+      return (n.scope === "all" || n.scope === purpose) && (!n.dest || n.dest === code);
+    });
+  }
+  function addOriginNotes(r) {
+    originNotes(r.o, r.purpose, r.code).forEach(function (n) { r.watch.push({ text: n.text, src: n.src }); });
+  }
+
+  function recentChanges(where) {
+    return D.CHANGES.filter(function (c) { return c.where === where && c.date >= "2025-09"; });
+  }
+  function changeChip(r, where, label) {
+    var rc = recentChanges(where);
+    if (rc.length) r.chips.push(["warn", label + " " + fmtDate(rc[rc.length - 1].date)]);
   }
 
   function resolveStudyFull(r, d) {
     var o = r.o;
-    var cta = code2cta(r);
-    r.headline = val(d.headline, o);
-    r.permit = d.permit;
+    var cta = r.code === "IRL" && o.cta;
+    r.headline = { text: val(d.headline, o), src: val(d.headSrc, o) };
     r.visaBefore = cta ? false : d.visaBefore(o);
     r.chips = [];
     if (cta) r.chips.push(["ok", "No visa, permit or registration"]);
     else r.chips.push(r.visaBefore ? ["req", "Visa before travel"] : ["ok", "No entry visa needed"]);
     if (!cta) r.chips.push(["info", "Residence step after arrival"]);
     if (!d.schengen) r.chips.push(["warn", "Not in Schengen"]);
-    var rc = recentChange(r.code);
-    if (rc.length) r.chips.push(["warn", "Rules changed " + fmtDate(rc[rc.length - 1].date)]);
+    changeChip(r, r.code, "Rules changed");
 
+    var headSrc = val(d.headSrc, o);
     r.figures = cta ? [
-      ["Visa before travel", "No", "Common Travel Area"],
-      ["Funds to prove", "None", "No immigration check on funds"],
-      ["Work while studying", "Unrestricted", "Same rights as Irish citizens"],
-      ["Stay after graduating", "Unlimited", "Common Travel Area"]
+      ["Visa before travel", "No", "Common Travel Area", ["ie-cta"]],
+      ["Funds to prove", "None", "No immigration check on funds", ["uk-cta"]],
+      ["Work while studying", "Unrestricted", "Same rights as Irish citizens", ["ie-cta", "uk-cta"]],
+      ["Stay after graduating", "Unlimited", "Common Travel Area", ["uk-living-ie"]]
     ] : [
-      ["Visa before travel", r.visaBefore ? "Yes" : "No", r.visaBefore ? "Apply at the consulate first" : "Apply for the permit after arrival"],
-      ["Funds to prove", d.funds.short, fundsSub(d)],
-      ["Work while studying", d.work.short, ""],
-      ["Stay after graduating", d.post.short, "to look for work"]
+      ["Visa before travel", r.visaBefore ? "Yes" : "No", r.visaBefore ? "Apply at the consulate first" : "Apply for the permit after arrival", headSrc],
+      ["Funds to prove", d.funds.short, fundsSub(d), d.funds.src],
+      ["Work while studying", d.work.short, "", d.work.src],
+      ["Stay after graduating", d.post.short, "to look for work", d.post.src]
     ];
 
-    r.steps = cta ? d.ctaSteps : d.steps.filter(function (s) { return !s.if || s.if(o); });
+    r.steps = (cta ? d.ctaSteps : d.steps.filter(function (s) { return !s.if || s.if(o); })).map(function (s) {
+      return { when: val(s.when, o), title: val(s.title, o), body: val(s.body, o), src: val(s.src, o) };
+    });
     r.docs = d.docs.filter(function (x) { return !x.when || x.when(o); }).map(function (x) { return x.label; });
-    r.watch = cta ? [] : d.watch.slice();
-    if (!cta && o.note && /study|long stay|Long stays/i.test(o.note)) r.watch.push(o.note);
+    r.docsSrc = cta ? ["uk-cta"] : d.docsSrc;
+    r.watch = cta ? [] : d.watch.map(function (w) { return { text: w.text, src: w.src }; });
 
-    // money
     if (!cta) {
       var rows = d.fees.filter(function (f) { return !f.when || f.when(o); }).map(function (f) {
-        return { label: f.label, eur: f.eur, note: f.note, conf: f.conf };
+        return { label: f.label, eur: f.eur, note: f.note, conf: f.conf, src: f.src };
       });
-      rows.push({ label: "Funds to show for 12 months", eur: Math.round(d.fundsYearEUR), note: d.fundsCurrency ? "Converted from " + d.fundsCurrency + " at approx. " + D.FX[d.fundsCurrency] + " per €" : null, conf: d.funds.conf, funds: true });
+      var months = d.fundsMonths || 12;
+      var fundsNote = d.code === "ITA" ? "One academic year" : d.code === "IRL" ? "One academic year" : months + " months";
+      if (d.fundsCurrency) fundsNote += "; converted from " + d.fundsCurrency + " at about " + D.FX[d.fundsCurrency] + " per euro";
+      rows.push({ label: "Funds to show for one year", eur: Math.round(d.fundsYearEUR), note: fundsNote, conf: d.funds.conf, src: d.funds.src });
       r.money = rows;
-      r.tuition = d.tuition;
+      r.moneyNote = "Tuition is set by each institution and is not included. Travel, housing and insurance come on top.";
     }
-    r.facts = cta ? [] : [
-      ["Funds", d.funds.text + ". " + d.funds.note, d.funds.conf],
-      ["Tuition (indicative)", d.tuition.text, d.tuition.conf],
-      ["Work while studying", d.work.text, d.work.conf],
-      ["After graduating", d.post.text, d.post.conf],
-      ["Health insurance", d.insurance, null],
-      ["Processing time", d.processing, null]
+    r.facts = cta ? [
+      ["Common Travel Area", "British and Irish citizens can live, work and study in each other's countries without permission, and can access social welfare and health services.", "official", ["ie-cta", "uk-cta"]],
+      ["Education", "Access to all levels of education on terms no less favourable than for Irish citizens.", "official", ["uk-cta"]]
+    ] : [
+      ["Funds", d.funds.text + ". " + d.funds.note, d.funds.conf, d.funds.src],
+      ["Work while studying", d.work.text, d.work.conf, d.work.src],
+      ["After graduating", d.post.text, d.post.conf, d.post.src],
+      ["Health insurance", d.insurance.text, null, d.insurance.src],
+      ["Processing time", d.processing.text, null, d.processing.src]
     ];
-    if (o.aps && r.code === "DEU") r.links = d.links.concat([{ label: D.APS[o.aps].label, url: D.APS[o.aps].url }]);
-    else r.links = d.links;
-    r.sources = uniq((d.funds.src || []).concat(d.src || []).concat(d.tuition.src || []));
-    if (o.code === "QAT" || o.code === "KWT") r.sources.push("ec-qatar-kuwait");
-    return r;
+    r.links = d.links.slice();
+    if (o.aps && r.code === "DEU") r.links.push({ label: D.APS[o.aps].label, url: D.APS[o.aps].url });
   }
 
-  function code2cta(r) { return r.code === "IRL" && r.o.cta; }
   function fundsSub(d) {
     if (d.code === "ITA") return "per academic year";
-    if (d.code === "IRL") return "for courses > 8 months";
+    if (d.code === "IRL") return "per academic year";
     if (d.code === "POL") return "plus a return ticket";
-    if (d.code === "SWE") return "≈ " + eur(Math.round(d.fundsEURmonth)) + " a month";
+    if (d.code === "SWE") return "≈ " + eur(Math.round(d.fundsEURmonth)) + " a month, 10 months a year";
     return "";
   }
-  function uniq(a) { return a.filter(function (x, i) { return a.indexOf(x) === i; }); }
 
   function resolveStudyBasic(r, b) {
     var o = r.o;
-    r.headline = "Apply for a national long-stay visa or residence permit for studies in " + b.name + ", usually before you travel.";
+    var danish = b.code === "DNK";
+    var euMin = danish ? [b.src] : ["dir-2016-801"];
+    r.headline = { text: "Apply for a national long-stay visa or residence permit for studies in " + b.name + ", usually before you travel.", src: [b.src, "ec-portal"] };
     r.visaBefore = true;
     r.chips = [["req", "Usually a visa before travel"], ["info", "Basic guide"], ["info", "Residence step after arrival"]];
     if (!b.schengen) r.chips.push(["warn", "Not in Schengen"]);
-    var danish = b.code === "DNK";
     r.figures = [
-      ["Visa before travel", "Usually", "Check the national authority"],
-      ["Funds to prove", "Set nationally", "Ask your university"],
-      ["Work while studying", danish ? "National rules" : "15+ h/week", danish ? "Denmark sets its own" : "EU minimum"],
-      ["Stay after graduating", danish ? "National rules" : "9+ months", danish ? "Denmark sets its own" : "EU minimum to look for work"]
+      ["Visa before travel", "Usually", "Check the national authority", [b.src]],
+      ["Funds to prove", "Set nationally", b.funds ? "See Key rules" : "Check the national authority", [b.src]],
+      ["Work while studying", danish ? "National rules" : "15+ h/week", danish ? "Denmark sets its own" : "EU minimum", euMin],
+      ["Stay after graduating", danish ? "National rules" : "9+ months", danish ? "Denmark sets its own" : "EU minimum, to look for work", euMin]
     ];
     r.steps = [
-      { when: "6–9 months before", title: "Get admitted to a recognised institution", body: "Choose a full-time programme at an accredited institution and keep the official admission letter." },
-      { when: "3–4 months before", title: "Check the national procedure", body: "Most EU countries require a national long-stay (type D) visa and/or a residence permit for studies, requested at the embassy before you travel. " + (o.schengenVisa ? "" : "Some countries let visa-free nationals apply after arriving. Confirm with the national authority before relying on this. ") + "Your university's international office usually knows the exact route." },
-      { when: "Before applying", title: "Prepare the core documents", body: "Admission letter, proof of funds (amount set nationally), health insurance, accommodation and often a police certificate, apostilled and translated where required." },
-      { when: "After arrival", title: "Register and collect your residence card", body: "Register your address and collect or apply for your residence permit card within the deadline on your visa." }
+      { when: "6–9 months before", title: "Get admitted to a recognised institution", body: "Choose a full-time programme at an accredited institution and keep the official admission letter.", src: ["dir-2016-801"] },
+      { when: "3–4 months before", title: "Check the national procedure", body: "Most EU countries require a national long-stay (type D) visa and/or a residence permit for studies, requested before you travel. " + (o.schengenVisa ? "" : "Some countries let visa-free nationals apply after arriving; confirm with the national authority before relying on this. ") + "Your university's international office usually knows the exact route.", src: [b.src, "ec-portal"] },
+      { when: "Before applying", title: "Prepare the core documents", body: "Admission letter, proof of funds (amount set nationally), health insurance, accommodation and often a police certificate, apostilled and translated where required.", src: ["dir-2016-801", b.src] },
+      { when: "After arrival", title: "Register and collect your residence card", body: "Register your address and collect or apply for your residence permit card within the deadline on your visa.", src: [b.src] }
     ];
     r.docs = ["Passport valid for the whole stay", "Admission letter", "Proof of funds (national amount)", "Health insurance", "Proof of accommodation", "Police certificate, if required"];
+    r.docsSrc = ["dir-2016-801", b.src];
     r.watch = [];
-    if (b.note) r.watch.push(b.note);
-    r.watch.push("This is a basic guide. We have not yet verified " + b.name + "'s national figures in detail, so check the official link before you act.");
+    if (b.note) r.watch.push({ text: b.note, src: [b.src] });
+    r.watch.push({ text: "This is a basic guide. We checked " + b.name + "'s official study-permit page but have not broken down every national figure, so read that page before you act.", src: [b.src] });
     r.money = null;
     r.facts = [
-      ["EU minimum rights", danish ? "Denmark is not bound by the EU students directive (2016/801), so its national rules apply." : "Under Directive (EU) 2016/801, students may work at least 15 hours a week and may stay at least 9 months after graduating to look for work or start a business.", "official"],
-      ["Where to check", b.auth + ".", null]
+      ["EU minimum rights", danish ? "Denmark is not bound by the EU students directive (2016/801), so its national rules apply." : "Under Directive (EU) 2016/801, students may work at least 15 hours a week and may stay at least 9 months after graduating to look for work or start a business.", "official", danish ? [b.src, "dir-2016-801"] : ["dir-2016-801"]]
     ];
+    if (b.funds) r.facts.push(["Funds", b.funds, "official", [b.src]]);
+    r.facts.push(["Where to check", b.auth + ".", null, [b.src]]);
     r.links = [{ label: b.auth, url: b.url }, { label: "EU Immigration Portal", url: D.SOURCES["ec-portal"].url }];
-    r.sources = ["dir-2016-801", "ec-portal"];
-    return r;
   }
 
   function resolveShort(r) {
     var o = r.o, S = D.SHORT;
-    r.money = null; r.tuition = null;
-    if (r.code === "IRL") {
-      if (o.cta) {
-        r.headline = "No visa or permission needed. British citizens travel freely to Ireland under the Common Travel Area.";
-        r.chips = [["ok", "No visa"], ["warn", "Not in Schengen"]];
-        r.figures = [["Visa", "Not needed", "Common Travel Area"], ["Max stay", "No limit", ""], ["Visa fee", "€0", ""], ["At the border", "Passport or ID", ""]];
-        r.steps = [{ when: "Before you travel", title: "Carry valid ID", body: "Airlines usually ask for a passport or photo ID." }];
-        r.docs = ["Passport or accepted photo ID"];
-      } else if (o.irelandVisa) {
-        r.headline = "You need an Irish short-stay (C) visa. A Schengen visa is not valid for Ireland.";
-        r.chips = [["req", "Irish visa required"], ["warn", "Not in Schengen"]];
-        r.figures = [["Visa", "Irish C visa", "Apply online (AVATS)"], ["Max stay", "Up to 90 days", "Irish rules, separate from Schengen"], ["Visa fee", "€60", "Single entry"], ["Processing", "≈ 8 weeks", "Apply early"]];
-        r.steps = [
-          { when: "Up to 3 months before", title: "Apply online on AVATS", body: "Complete the online form and follow the instructions for your country's visa office." },
-          { when: "After applying", title: "Send your documents", body: "Send your passport and supporting documents to the embassy or visa office named on your AVATS summary." },
-          { when: "Check first", title: "Check the Short Stay Visa Waiver Programme", body: "Some nationalities holding a valid UK visa can enter Ireland without an Irish visa. Check the current list first." }
-        ];
-        r.docs = ["AVATS application summary, signed", "Passport and photos", "Proof of funds", "Accommodation and return travel", "Letter explaining the purpose of the trip"];
-      } else {
-        r.headline = "No visa needed for a short stay in Ireland. Ireland is not in Schengen, so its 90 days are counted separately.";
-        r.chips = [["ok", "Visa-free"], ["warn", "Not in Schengen"]];
-        r.figures = [["Visa", "Not needed", ""], ["Max stay", "Up to 90 days", "Decided at the border"], ["Visa fee", "€0", ""], ["At the border", "Passport check", "No EES or ETIAS"]];
-        r.steps = [{ when: "At the border", title: "Show why you are visiting", body: "Immigration officers decide how long you can stay (up to 90 days). Carry your return ticket and accommodation details." }];
-        r.docs = S.freeDocs.slice();
-      }
-      r.watch = ["A Schengen visa does not let you enter Ireland, and days in Ireland do not count toward the Schengen 90/180 limit."];
-      r.facts = [];
-      r.links = [{ label: "Irish Immigration Service Delivery", url: "https://www.irishimmigration.ie" }];
-      r.sources = [];
-      return r;
-    }
+    r.money = null;
+    r.chips = [];
+    if (r.code === "IRL") return resolveShortIreland(r);
+    if (r.code === "CYP") return resolveShortCyprus(r);
 
-    var cyprus = r.code === "CYP";
     if (o.schengenVisa) {
-      r.headline = cyprus
-        ? "Cyprus is not in Schengen. You need a Cyprus visa, although valid multiple-entry Schengen visas are often accepted. Check first."
-        : "You need a Schengen short-stay visa (type C) before you travel. It covers all 29 Schengen countries.";
-      r.chips = [["req", "Visa required"], ["info", "EES biometrics at border"]];
-      if (cyprus) r.chips.push(["warn", "Not in Schengen"]);
-      r.figures = [["Visa", cyprus ? "Cyprus visa" : "Schengen C visa", "Apply at a consulate"], ["Max stay", "90 days", "in any 180 days"], ["Visa fee", "€90", "€45 for ages 6–12"], ["Decision", "15 days", "up to 45"]];
+      r.headline = { text: "You need a Schengen short-stay visa (type C) before you travel. It covers all 29 Schengen countries.", src: ["reg-visa-list", "eu-apply-schengen"] };
+      r.chips.push(["req", "Visa required"], ["info", "EES biometrics at border"]);
+      r.figures = [
+        ["Visa", "Schengen C visa", "Apply at a consulate", ["reg-visa-list"]],
+        ["Max stay", "90 days", "in any 180 days", ["reg-visa-list"]],
+        ["Visa fee", "€90", "€45 for ages 6–12", ["eu-fee-2024"]],
+        ["Decision", "15 days", "can be extended", ["reg-visa-code"]]
+      ];
       r.steps = S.visaSteps.slice();
       r.docs = S.visaDocs.slice();
+      r.docsSrc = S.visaDocsSrc;
       r.money = [
-        { label: "Visa fee (adult)", eur: S.feeAdult, conf: "multi" },
-        { label: "Visa centre service fee", eur: null, note: "Varies by provider, often €30–€50", conf: "check" },
-        { label: "Travel medical insurance", eur: null, note: "At least €30,000 cover; price varies", conf: "official" }
+        { label: "Visa fee (adult)", eur: S.feeAdult, conf: "official", src: ["eu-fee-2024"] },
+        { label: "Visa fee (child 6–12)", eur: S.feeChild, conf: "official", src: ["eu-fee-2024"] },
+        { label: "Visa centre service fee", eur: null, note: "Set by the provider; shown on the consulate's website", src: ["reg-visa-code"] },
+        { label: "Travel medical insurance", eur: null, note: "At least €30,000 cover; price varies", conf: "official", src: ["reg-visa-code"] }
       ];
+      r.moneyNote = "Pupils and students travelling for study or training pay no visa fee. Travel and accommodation come on top.";
     } else {
-      r.headline = cyprus
-        ? "No visa needed for up to 90 days in Cyprus. Cyprus counts days separately from Schengen."
-        : "No visa needed for up to 90 days in any 180 across the Schengen area. Your fingerprints and photo are recorded at the border (EES).";
-      r.chips = [["ok", "Visa-free"], ["info", "EES biometrics at border"], ["warn", "ETIAS not in force yet"]];
-      r.figures = [["Visa", "Not needed", ""], ["Max stay", "90 days", "in any 180 days"], ["Visa fee", "€0", "ETIAS €20 once it starts"], ["At the border", "EES", "Fingerprints + photo"]];
+      r.headline = { text: "No visa needed for up to 90 days in any 180 across the Schengen area. Your fingerprints and photo are recorded at the border (EES).", src: ["etias-who", "reg-visa-list", "ees-full"] };
+      r.chips.push(["ok", "Visa-free"], ["info", "EES biometrics at border"], ["warn", "ETIAS not in force yet"]);
+      r.figures = [
+        ["Visa", "Not needed", "", ["etias-who"]],
+        ["Max stay", "90 days", "in any 180 days", ["reg-visa-list"]],
+        ["Visa fee", "€0", "ETIAS €20 once it starts", ["etias-fee"]],
+        ["At the border", "EES", "Fingerprints + photo", ["ees-full"]]
+      ];
       r.steps = S.freeSteps.slice();
       r.docs = S.freeDocs.slice();
+      r.docsSrc = S.freeDocsSrc;
     }
+    changeChip(r, o.code, "Rules for " + o.adj + " citizens changed");
     r.watch = [];
-    if (o.refusal) r.watch.push(o.refusal + ". Complete, consistent documents matter more than anything else.");
-    if (o.cascade) r.watch.push(o.cascade);
-    if (o.note && !/study|Long stays/i.test(o.note)) r.watch.push(o.note);
-    if (!o.schengenVisa) r.watch.push("Be wary of websites that charge for \"ETIAS\" today. The official system has not started.");
-    r.watch.push("Studying for more than 90 days needs a national visa or permit. Switch to \"Study > 90 days\".");
+    if (!o.schengenVisa) r.watch.push({ text: "Be wary of websites that charge for \"ETIAS\" today. The official system has not started.", src: ["etias-home"] });
+    r.watch.push({ text: "Studying for more than 90 days needs a national visa or permit. Switch to \"Study > 90 days\".", src: ["youreurope-docs"] });
     r.facts = [
-      ["The 90/180 rule", "Count every day in any Schengen country within the last 180 days. Entry and exit days both count.", "official"],
-      ["ETIAS", "Planned €20 travel authorisation for visa-free travellers. No launch date since July 2026; 2027 widely expected.", "multi"]
+      ["The 90/180 rule", "Count every day in any Schengen country within the last 180 days. Entry and exit days both count.", "official", ["reg-visa-list", "youreurope-docs"]],
+      ["Entry/Exit System", "Fingerprints and a face photo are recorded at your first entry; passport stamping has ended.", "official", ["ees-full", "ees-faq"]]
     ];
+    if (o.schengenVisa) r.facts.unshift(["Where to apply", "At the consulate of the country where you spend the most days; if equal, the country you enter first.", "official", ["eu-apply-schengen"]]);
+    else r.facts.push(["ETIAS", "Planned €20 travel authorisation for visa-free travellers. It is not in operation and has no start date yet.", "official", ["etias-home", "etias-fee", "fragomen-etias"]]);
     r.links = [
-      { label: "EU visa policy (European Commission)", url: "https://home-affairs.ec.europa.eu/policies/schengen/visa-policy_en" },
+      { label: "EU: applying for a Schengen visa", url: D.SOURCES["eu-apply-schengen"].url },
       { label: "Entry/Exit System (official)", url: "https://travel-europe.europa.eu/en/ees" },
       { label: "ETIAS (official)", url: "https://travel-europe.europa.eu/en/etias" }
     ];
-    r.sources = ["reg-visa-code", "reg-visa-list", "ec-ees", "fragomen-etias", "ec-stats"];
-    if (o.code === "IND") r.sources.push("eeas-india", "bt-india");
-    if (/Saudi|Bahrain|Oman/.test(o.name)) r.sources.push("ey-gcc");
-    if (o.code === "QAT" || o.code === "KWT") r.sources.push("ec-qatar-kuwait");
-    return r;
+  }
+
+  function resolveShortIreland(r) {
+    var o = r.o, S = D.SHORT;
+    if (o.cta) {
+      r.headline = { text: "No visa or permission needed. British citizens travel freely to Ireland under the Common Travel Area.", src: ["ie-cta", "uk-cta"] };
+      r.chips.push(["ok", "No visa"], ["warn", "Not in Schengen"]);
+      r.figures = [["Visa", "Not needed", "Common Travel Area", ["ie-cta"]], ["Max stay", "No limit", "", ["uk-cta"]], ["Visa fee", "€0", "", ["ie-cta"]], ["At the border", "Passport or ID", "", ["uk-living-ie"]]];
+      r.steps = [{ when: "Before you travel", title: "Carry valid ID", body: "Airlines usually ask for a passport or photo ID.", src: ["uk-living-ie"] }];
+      r.docs = ["Passport or accepted photo ID"];
+      r.docsSrc = ["ie-cta"];
+    } else if (o.irelandVisa) {
+      r.headline = { text: "You need an Irish short-stay (C) visa. A Schengen visa is not valid for Ireland.", src: ["ie-visa-list"] };
+      r.chips.push(["req", "Irish visa required"], ["warn", "Not in Schengen"]);
+      r.figures = [
+        ["Visa", "Irish C visa", "Apply online (AVATS)", ["ie-visa-list"]],
+        ["Max stay", "Up to 90 days", "Decided at the border", ["ie-visa-list"]],
+        ["Visa fee", "€60", "Single entry", ["ie-fees"]],
+        ["Processing", "See office", o.irlOffice ? o.irlOffice + " visa office" : "Your visa office", ["ie-visa-offices"]]
+      ];
+      r.steps = [
+        { when: "Up to 3 months before", title: "Apply online on AVATS", body: "Complete the online form and follow the instructions for your country's visa office" + (o.irlOffice ? " (" + o.irlOffice + ")" : "") + ".", src: ["ie-visa-offices"] },
+        { when: "After applying", title: "Send your documents", body: "Send your passport and supporting documents to the embassy or visa office named on your AVATS summary.", src: ["ie-visa-offices"] },
+        { when: "Check first", title: "Check the Short Stay Visa Waiver Programme", body: "Some nationalities holding a valid UK visa can enter Ireland without an Irish visa. Check whether yours is on the list.", src: ["ie-ssvwp"] }
+      ];
+      r.docs = ["AVATS application summary, signed", "Passport and photos", "Proof of funds", "Accommodation and return travel", "Letter explaining the purpose of the trip"];
+      r.docsSrc = ["ie-visa-offices"];
+      r.money = [{ label: "Irish visa (single entry)", eur: 60, conf: "official", src: ["ie-fees"] }];
+      r.moneyNote = "Travel and accommodation come on top.";
+    } else {
+      r.headline = { text: "No visa needed for a short stay in Ireland. Ireland is not in Schengen, so its 90 days are counted separately.", src: ["ie-visa-list"] };
+      r.chips.push(["ok", "Visa-free"], ["warn", "Not in Schengen"]);
+      r.figures = [["Visa", "Not needed", "", ["ie-visa-list"]], ["Max stay", "Up to 90 days", "Decided at the border", ["ie-visa-list"]], ["Visa fee", "€0", "", ["ie-visa-list"]], ["At the border", "Passport check", "No EES or ETIAS", ["ees-faq", "etias-who"]]];
+      r.steps = [{ when: "At the border", title: "Show why you are visiting", body: "Immigration officers decide how long you can stay (up to 90 days). Carry your return ticket and accommodation details.", src: ["ie-visa-list"] }];
+      r.docs = S.freeDocs.slice();
+      r.docsSrc = ["ie-visa-list"];
+    }
+    r.watch = [{ text: "A Schengen visa does not let you enter Ireland, and days in Ireland do not count toward the Schengen 90/180 limit.", src: ["ie-visa-list", "youreurope-docs"] }];
+    r.facts = o.cta ? [["Common Travel Area", "British and Irish citizens can move and live freely between the UK and Ireland.", "official", ["ie-cta", "uk-cta"]]] : [
+      ["Separate from Schengen", "Ireland runs its own visa system and its own limit of up to 90 days, decided by the immigration officer at the border.", "official", ["ie-visa-list"]],
+      ["EES and ETIAS", "Neither the Entry/Exit System nor ETIAS applies to trips to Ireland.", "official", ["ees-faq", "etias-who"]]
+    ];
+    r.links = [{ label: "Irish Immigration: visa and non-visa nationalities", url: D.SOURCES["ie-visa-list"].url }, { label: "Irish Immigration: visa offices", url: D.SOURCES["ie-visa-offices"].url }];
+  }
+
+  function resolveShortCyprus(r) {
+    var o = r.o, S = D.SHORT;
+    var tur = o.code === "TUR";
+    if (o.schengenVisa) {
+      r.headline = { text: tur
+        ? "Cyprus is not in Schengen. Turkish citizens need a Cyprus visa; a Schengen visa is not accepted for them."
+        : "Cyprus is not in Schengen. You need a Cyprus visa, unless you already hold a valid double- or multiple-entry Schengen visa, which Cyprus accepts for up to 90 days.", src: ["cy-visa", "reg-visa-list"] };
+      r.chips.push(["req", "Visa required"], ["warn", "Not in Schengen"]);
+      r.figures = [
+        ["Visa", "Cyprus visa", tur ? "Schengen visa not accepted" : "or a multi-entry Schengen visa", ["cy-visa"]],
+        ["Max stay", "90 days", "in any 180 days", ["cy-visa"]],
+        ["Visa fee", "See embassy", "Set by Cyprus", ["cy-visa"]],
+        ["At the border", "Passport check", "Purpose may be checked", ["cy-visa"]]
+      ];
+      r.steps = [
+        { when: "First", title: tur ? "Apply for a Cyprus visa" : "Check the Schengen visa you already have", body: tur ? "Apply at the Cyprus embassy or consulate that covers your country of residence." : "A valid double- or multiple-entry Schengen visa lets you enter Cyprus for up to 90 days in any 180. A single-entry visa does not.", src: ["cy-visa"] },
+        { when: "Otherwise", title: "Apply at a Cyprus embassy or consulate", body: "Apply for a Cyprus short-stay visa where you live. The border can still check the purpose of your trip.", src: ["cy-visa"] }
+      ];
+      r.docs = S.visaDocs.slice();
+      r.docsSrc = ["cy-visa"];
+    } else {
+      r.headline = { text: "No visa needed for up to 90 days in Cyprus. Cyprus is not in Schengen and counts days separately.", src: ["cy-visa", "reg-visa-list"] };
+      r.chips.push(["ok", "Visa-free"], ["warn", "Not in Schengen"]);
+      r.figures = [["Visa", "Not needed", "", ["cy-visa"]], ["Max stay", "90 days", "in any 180 days", ["reg-visa-list"]], ["Visa fee", "€0", "", ["cy-visa"]], ["At the border", "Passport check", "", ["cy-visa"]]];
+      r.steps = [{ when: "At the border", title: "Carry proof of your trip", body: "Carry your return ticket and accommodation details. Days in Cyprus don't count toward the Schengen 90/180 limit.", src: ["cy-visa"] }];
+      r.docs = S.freeDocs.slice();
+      r.docsSrc = S.freeDocsSrc;
+    }
+    r.watch = [{ text: "Cyprus is an EU country but not in Schengen: days in Cyprus don't count toward the Schengen 90/180 limit, and a Cyprus visa doesn't let you enter Schengen countries.", src: ["cy-visa", "youreurope-docs"] }];
+    r.facts = [
+      ["Who needs a visa", "Cyprus applies the EU's common visa list, so the same nationalities need a visa as for Schengen.", "official", ["reg-visa-list", "cy-visa"]],
+      ["Passport rules", "Your passport must have been issued within the last 10 years and be valid at least 3 months after you leave.", "official", ["youreurope-docs"]]
+    ];
+    r.links = [{ label: "Cyprus MFA: who needs a visa", url: D.SOURCES["cy-visa"].url }];
+  }
+
+  /* ---------- where to apply / your government ---------- */
+  function embassyLinks(r) {
+    var o = r.o, out = [], note = "";
+    var own = EMB[o.code] && EMB[o.code][r.code];
+    if (r.code === "IRL" && o.cta) return { items: [], note: "British citizens don't apply anywhere: no visa or permission is needed." };
+    if (own) out.push({ label: own[0], url: own[1], tag: "Embassy for " + o.name });
+    if (r.full) {
+      r.dest.portal.forEach(function (p) { out.push({ label: p.label, url: p.url, tag: "Worldwide" }); });
+      if (!own) note = "We did not find a " + r.name + " embassy page specific to " + o.name + ". Use the worldwide link to find the mission that covers where you live.";
+      if (r.code === "IRL" && o.irelandVisa && o.irlOffice) note = (note ? note + " " : "") + "Irish visa applications from " + o.name + " are handled by the " + o.irlOffice + " visa office.";
+      if (r.code === "DEU" && o.aps && r.purpose === "study") out.push({ label: D.APS[o.aps].label, url: D.APS[o.aps].url, tag: "Required first" });
+    } else {
+      out.push({ label: r.dest.auth, url: r.dest.url, tag: "National authority" });
+      note = "Embassy pages for " + r.name + " are not in our list yet. The national authority page explains where to apply.";
+    }
+    return { items: out, note: note };
+  }
+
+  function govLinks(r) {
+    var o = r.o, out = [];
+    if (o.advice && D.ADVICE[o.advice]) {
+      var url = D.ADVICE[o.advice](r.dest);
+      if (url) out.push({ label: D.ADVICE_LABEL[o.advice].replace("{d}", r.name), url: url, tag: "Travel advice" });
+    }
+    var oe = D.ORIGIN_EMB[o.code] && D.ORIGIN_EMB[o.code][r.code];
+    if (oe) out.push({ label: oe[0], url: oe[1], tag: "Your embassy in " + r.name });
+    if (o.gov) out.push({ label: o.gov[0], url: o.gov[1], tag: "Find your embassy in " + r.name });
+    return out;
   }
 
   /* ---------- render result ---------- */
   function renderResult() {
+    resetRefs();
     var r = resolve();
     var o = r.o;
     var purposeLabel = r.purpose === "study" ? "STUDY > 90 DAYS" : "SHORT STAY ≤ 90 DAYS";
     $("#band-route").textContent = o.code + " → " + r.code + " · " + purposeLabel;
     $("#band-checked").textContent = "RULES CHECKED " + fmtDate(D.VERIFIED).toUpperCase();
     $("#r-title").textContent = o.name + " passport → " + r.name;
-    $("#r-headline").textContent = r.headline;
+    $("#r-headline").innerHTML = esc(r.headline.text) + cite(r.headline.src);
     $("#r-chips").innerHTML = r.chips.map(function (c) { return '<span class="chip ' + c[0] + '">' + esc(c[1]) + "</span>"; }).join("");
     $("#r-figures").innerHTML = r.figures.map(function (f) {
-      return '<div class="figure"><span class="k">' + esc(f[0]) + '</span><span class="v">' + esc(f[1]) + "</span>" + (f[2] ? '<span class="s">' + esc(f[2]) + "</span>" : "") + "</div>";
-    }).join("");
-
-    $("#r-steps").innerHTML = r.steps.map(function (s) {
-      return '<li><span class="when">' + esc(val(s.when, o)) + "</span><h4>" + esc(val(s.title, o)) + "</h4><p>" + esc(val(s.body, o)) + "</p></li>";
+      return '<div class="figure"><span class="k">' + esc(f[0]) + '</span><span class="v">' + esc(f[1]) + "</span>" + '<span class="s">' + esc(f[2] || "") + cite(f[3]) + "</span></div>";
     }).join("");
 
     // watch-outs
-    var w = $("#r-watch");
-    w.hidden = !r.watch.length;
-    $("#r-watch-list").innerHTML = r.watch.map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("");
+    $("#r-watch").hidden = !r.watch.length;
+    $("#r-watch-list").innerHTML = r.watch.map(function (x) { return "<li>" + esc(x.text) + cite(x.src) + "</li>"; }).join("");
+
+    $("#r-steps").innerHTML = r.steps.map(function (s) {
+      return '<li><span class="when">' + esc(s.when) + "</span><h4>" + esc(s.title) + "</h4><p>" + esc(s.body) + cite(s.src) + "</p></li>";
+    }).join("");
 
     // checklist
+    $("#r-docs-cite").innerHTML = cite(r.docsSrc);
     var key = o.code + "-" + r.code + "-" + r.purpose;
     var done = checks[key] || [];
     $("#r-docs").innerHTML = r.docs.map(function (label, i) {
@@ -316,31 +438,56 @@
     var m = $("#r-money");
     if (r.money) {
       m.hidden = false;
-      var total = 0;
+      var total = 0, open = false;
       var rows = r.money.map(function (x) {
-        if (x.eur != null) total += x.eur;
-        return "<tr><td>" + esc(x.label) + (x.note ? '<span class="note">' + esc(x.note) + "</span>" : "") + " " + conf(x.conf) + "</td><td>" + (x.eur != null ? eur(x.eur, 0) : "varies") + "</td></tr>";
+        if (x.eur != null && !/child/.test(x.label)) total += x.eur;
+        if (x.eur == null) open = true;
+        return "<tr><td>" + esc(x.label) + cite(x.src) + (x.note ? '<span class="note">' + esc(x.note) + "</span>" : "") + " " + conf(x.conf) + "</td><td>" + (x.eur != null ? eur(x.eur, 0) : "varies") + "</td></tr>";
       }).join("");
-      var totalLabel = r.purpose === "study" ? "Cash to line up before you apply" : "Known fees";
-      $("#r-money-table").innerHTML = rows + '<tr class="total"><td>' + totalLabel + "</td><td>" + eur(total, 0) + "</td></tr>";
-      $("#r-money-note").textContent = r.tuition ? "Plus tuition. " + r.tuition.text : "Travel, accommodation and insurance come on top.";
+      var totalLabel = r.purpose === "study" ? "Cash to line up before you apply" : "Known fees (one adult)";
+      $("#r-money-table").innerHTML = rows + '<tr class="total"><td>' + totalLabel + (open ? '<span class="note">Plus the items marked "varies"</span>' : "") + "</td><td>" + eur(total, 0) + "</td></tr>";
+      $("#r-money-note").textContent = r.moneyNote || "";
     } else {
       m.hidden = true;
+      $("#r-money-table").innerHTML = "";
+      $("#r-money-note").textContent = "";
     }
 
     // facts
     $("#r-facts").innerHTML = r.facts.map(function (f) {
-      return "<div><dt>" + esc(f[0]) + " " + conf(f[2]) + "</dt><dd>" + esc(f[1]) + "</dd></div>";
+      return "<div><dt>" + esc(f[0]) + " " + conf(f[2]) + "</dt><dd>" + esc(f[1]) + cite(f[3]) + "</dd></div>";
     }).join("");
     $("#r-facts-panel").hidden = !r.facts.length;
 
-    // links + sources
-    $("#r-links").innerHTML = r.links.map(function (l) { return '<li><a href="' + esc(l.url) + '" target="_blank" rel="noopener">' + esc(l.label) + "</a></li>"; }).join("");
-    var srcs = r.sources.filter(function (k) { return D.SOURCES[k]; });
-    $("#r-sources").innerHTML = srcs.length ? srcs.map(function (k) {
+    // quick links
+    $("#r-links").innerHTML = r.links.map(function (l) { return "<li>" + link(l.label, l.url) + "</li>"; }).join("");
+
+    renderResultSources(r);
+  }
+
+  function linkItems(list) {
+    return list.map(function (l) { return "<li>" + link(l.label, l.url) + (l.tag ? ' <span class="tag">' + esc(l.tag) + "</span>" : "") + "</li>"; }).join("");
+  }
+
+  function renderResultSources(r) {
+    var o = r.o;
+    $("#refs-title").textContent = "Sources for " + o.name + " → " + r.name;
+    var emb = embassyLinks(r);
+    $("#r-emb-h").textContent = r.name + " embassy / where to apply";
+    $("#r-emb").innerHTML = linkItems(emb.items);
+    $("#r-emb-note").textContent = emb.note;
+    $("#r-emb-note").hidden = !emb.note;
+    $("#r-gov-h").textContent = o.name + ": your government";
+    $("#r-gov").innerHTML = linkItems(govLinks(r));
+
+    var official = 0;
+    $("#r-sources").innerHTML = refs.map(function (k, i) {
       var s = D.SOURCES[k];
-      return "<li>" + esc(s.apa) + (s.url ? ' <a href="' + esc(s.url) + '" target="_blank" rel="noopener">Link</a>' : "") + ' <span class="conf ' + (s.type === "official" ? "official" : "multi") + '">' + (s.type === "official" ? "Official" : "Secondary") + "</span></li>";
-    }).join("") : '<li class="muted">Official links above.</li>';
+      if (s.type === "official") official++;
+      return '<li id="ref-' + (i + 1) + '"><span class="n">[' + (i + 1) + "]</span><span>" + apa(s) + link(s.url, s.url) +
+        ' <span class="t ' + s.type + '">' + (s.type === "official" ? "Official" : "Secondary") + "</span></span></li>";
+    }).join("");
+    $("#r-refs-count").textContent = refs.length + " cited · " + official + " official";
   }
 
   function updateProgress(total, n) {
@@ -351,21 +498,23 @@
   function copyChecklist(r) {
     var o = r.o;
     var lines = ["ClearEntry checklist: " + o.name + " passport → " + r.name + " (" + (r.purpose === "study" ? "study > 90 days" : "short stay") + ")", "Rules checked " + fmtDate(D.VERIFIED), "", "Steps:"];
-    r.steps.forEach(function (s, i) { lines.push((i + 1) + ". " + val(s.title, o) + " (" + val(s.when, o) + ")"); });
+    r.steps.forEach(function (s, i) { lines.push((i + 1) + ". " + s.title + " (" + s.when + ")"); });
     lines.push("", "Documents:");
     r.docs.forEach(function (d) { lines.push("[ ] " + d); });
-    lines.push("", "Official links:");
-    r.links.forEach(function (l) { lines.push("- " + l.label + ": " + l.url); });
+    lines.push("", "Where to apply:");
+    embassyLinks(r).items.forEach(function (l) { lines.push("- " + l.label + ": " + l.url); });
+    lines.push("", "Sources:");
+    refs.forEach(function (k, i) { var s = D.SOURCES[k]; lines.push("[" + (i + 1) + "] " + s.pub + " (" + s.date + "). " + s.title + ". " + s.url); });
     var text = lines.join("\n");
     var btn = $("#copy-docs");
     function done(ok) { btn.textContent = ok ? "Copied" : "Select the text below"; setTimeout(function () { btn.textContent = "Copy checklist"; }, 2000); }
-    try {
-      navigator.clipboard.writeText(text).then(function () { done(true); }, function () { fallback(); });
-    } catch (e) { fallback(); }
     function fallback() {
       var ta = $("#copy-fallback");
       ta.hidden = false; ta.value = text; ta.focus(); ta.select(); done(false);
     }
+    try {
+      navigator.clipboard.writeText(text).then(function () { done(true); }, fallback);
+    } catch (e) { fallback(); }
   }
 
   /* ---------- compare ---------- */
@@ -378,19 +527,23 @@
       var entry;
       if (cta) entry = "No visa (Common Travel Area)";
       else if (c === "NLD") entry = o.mvvExempt ? "University applies; no MVV" : "University applies; MVV visa";
-      else if (c === "DEU" && o.de41 === "full") entry = "Visa-free entry, permit in Germany";
+      else if (c === "DEU" && o.de41) entry = "Visa-free entry, permit in Germany (or visa first)";
       else if (c === "IRL" && !o.irelandVisa) entry = "No visa; register on arrival";
       else if (c === "SWE") entry = "Residence permit before travel";
+      else if (c === "ESP" && !o.schengenVisa) entry = "Visa first, or apply in Spain within 60 days";
       else entry = "Visa before travel";
-      return { code: c, name: d.name, entry: entry, funds: cta ? 0 : d.fundsEURmonth, fundsCur: d.fundsCurrency, work: cta ? "Unrestricted" : d.work.short, post: cta ? "Unlimited" : d.post.short, tuition: d.tuition, cta: cta };
+      var fees = cta ? [] : d.fees.filter(function (f) { return !f.when || f.when(o); });
+      var known = 0, open = false;
+      fees.forEach(function (f) { if (f.eur == null) open = true; else known += f.eur; });
+      return { code: c, name: d.name, entry: entry, funds: cta ? 0 : d.fundsEURmonth, fundsCur: d.fundsCurrency, work: cta ? "Unrestricted" : d.work.short, post: cta ? "Unlimited" : d.post.short, fees: known, feesOpen: open, cta: cta };
     });
     $("#cmp-body").innerHTML = rows.map(function (x) {
       return '<tr class="' + (x.code === state.dest ? "is-selected" : "") + '"><th scope="row"><button class="linklike" data-dest="' + x.code + '">' + esc(x.name) + "</button></th>" +
         "<td>" + esc(x.entry) + "</td>" +
         '<td class="num">' + (x.cta ? "None" : eur(Math.round(x.funds)) + (x.fundsCur ? " *" : "")) + "</td>" +
+        '<td class="num">' + (x.cta ? "€0" : x.fees === 0 && x.feesOpen ? "Varies" : eur(Math.round(x.fees)) + (x.feesOpen ? " +" : "")) + "</td>" +
         "<td>" + esc(x.work) + "</td>" +
-        "<td>" + esc(x.post) + "</td>" +
-        '<td class="num">' + (x.tuition.low === 0 ? "€0 – " + eur(x.tuition.high) + "†" : eur(x.tuition.low) + " – " + eur(x.tuition.high)) + "</td></tr>";
+        "<td>" + esc(x.post) + "</td></tr>";
     }).join("");
     $all("#cmp-body button[data-dest]").forEach(function (b) {
       b.addEventListener("click", function () {
@@ -406,7 +559,7 @@
     hbar($("#cmp-chart"), chartRows, { unit: "€" });
   }
 
-  /* ---------- charts (plain SVG) ---------- */
+  /* ---------- chart (plain SVG) ---------- */
   function niceMax(v, step) { return Math.ceil(v / step) * step; }
   function barPath(x, y, w, h, r) {
     // square at the baseline (left), 4px rounded data-end (right)
@@ -414,17 +567,11 @@
     if (w <= 0) return "";
     return "M" + x + "," + y + "h" + (w - r) + "a" + r + "," + r + " 0 0 1 " + r + "," + r + "v" + (h - 2 * r) + "a" + r + "," + r + " 0 0 1 " + (-r) + "," + r + "h" + (-(w - r)) + "z";
   }
-  function colPath(x, y, w, h, r) {
-    r = Math.min(r, w / 2, h);
-    if (h <= 0) return "";
-    return "M" + x + "," + (y + h) + "v" + (-(h - r)) + "a" + r + "," + r + " 0 0 1 " + r + "," + (-r) + "h" + (w - 2 * r) + "a" + r + "," + r + " 0 0 1 " + r + "," + r + "v" + (h - r) + "z";
-  }
   function tooltip(container) {
     var t = container.querySelector(".tooltip");
     if (!t) { t = document.createElement("div"); t.className = "tooltip"; t.hidden = true; container.appendChild(t); }
     return t;
   }
-
   function hbar(container, rows, opts) {
     var svgHost = container.querySelector(".svg-host");
     var W = Math.max(300, svgHost.clientWidth || 600);
@@ -456,59 +603,8 @@
         var box = svgHost.getBoundingClientRect(), cbox = container.getBoundingClientRect();
         var scale = box.width / W;
         tip.textContent = r.tip; tip.hidden = false;
-        tip.style.left = (box.left - cbox.left + (x(r.value) / 1) * scale) + "px";
+        tip.style.left = (box.left - cbox.left + x(r.value) * scale) + "px";
         tip.style.top = (box.top - cbox.top + (top + i * rowH) * scale) + "px";
-      });
-      h.addEventListener("mouseleave", function () { tip.hidden = true; });
-    });
-  }
-
-  function columns(container, cats, series, opts) {
-    var svgHost = container.querySelector(".svg-host");
-    var W = Math.max(300, svgHost.clientWidth || 600);
-    var left = 64, right = 8, top = 24, bottom = 28, H = 280;
-    var plotW = W - left - right, plotH = H - top - bottom;
-    var all = [];
-    series.forEach(function (s) { all = all.concat(s.values); });
-    var step = opts.step, max = niceMax(Math.max.apply(null, all), step);
-    var y = function (v) { return top + plotH - (v / max) * plotH; };
-    var band = plotW / cats.length;
-    var bw = Math.min(24, (band * 0.6) / series.length);
-    var gap = 2;
-    var s = '<svg viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="' + esc(opts.label) + '">';
-    for (var t = 0; t <= max; t += step) {
-      s += '<line class="gridline" x1="' + left + '" x2="' + (W - right) + '" y1="' + y(t) + '" y2="' + y(t) + '"/>';
-      s += '<text class="tick" x="' + (left - 8) + '" y="' + (y(t) + 4) + '" text-anchor="end">' + (t === 0 ? "0" : "€" + (t / 1000) + "k") + "</text>";
-    }
-    s += '<line class="axis" x1="' + left + '" x2="' + (W - right) + '" y1="' + y(0) + '" y2="' + y(0) + '"/>';
-    cats.forEach(function (c, ci) {
-      var cx = left + band * ci + band / 2;
-      var groupW = series.length * bw + (series.length - 1) * gap;
-      series.forEach(function (se, si) {
-        var v = se.values[ci];
-        var bx = cx - groupW / 2 + si * (bw + gap);
-        s += '<path class="bar ' + se.cls + '" d="' + colPath(bx, y(v), bw, y(0) - y(v), 4) + '"/>';
-        // first bar's label hangs left from its right edge, later bars' labels run right from their left edge,
-        // so neighbouring labels never overlap across the 2px gap
-        var anchor = series.length > 1 ? (si === 0 ? "end" : "start") : "middle";
-        var lx = anchor === "end" ? bx + bw : anchor === "start" ? bx : bx + bw / 2;
-        s += '<text class="val" x="' + lx + '" y="' + (y(v) - 6) + '" text-anchor="' + anchor + '">€' + Math.round(v / 1000) + "k</text>";
-      });
-      s += '<text class="lbl" x="' + cx + '" y="' + (H - 8) + '" text-anchor="middle">' + esc(c) + "</text>";
-      s += '<rect class="hit" data-i="' + ci + '" x="' + (left + band * ci) + '" y="' + top + '" width="' + band + '" height="' + plotH + '"/>';
-    });
-    s += "</svg>";
-    svgHost.innerHTML = s;
-    var tip = tooltip(container);
-    $all(".hit", svgHost).forEach(function (h) {
-      h.addEventListener("mouseenter", function () {
-        var i = +h.getAttribute("data-i");
-        var box = svgHost.getBoundingClientRect(), cbox = container.getBoundingClientRect();
-        var scale = box.width / W;
-        tip.textContent = cats[i] + ": " + series.map(function (se) { return se.name + " " + eur(se.values[i], 0); }).join(" · ");
-        tip.hidden = false;
-        tip.style.left = (box.left - cbox.left + (left + band * i + band / 2) * scale) + "px";
-        tip.style.top = (box.top - cbox.top + top * scale) + "px";
       });
       h.addEventListener("mouseleave", function () { tip.hidden = true; });
     });
@@ -519,39 +615,42 @@
     var list = D.CHANGES.slice().sort(function (a, b) { return a.date < b.date ? 1 : -1; });
     $("#changes-list").innerHTML = list.map(function (c) {
       var s = D.SOURCES[c.src];
-      return '<li><time datetime="' + c.date + '">' + fmtDate(c.date) + '</time><span class="where">' + c.where + "</span><span>" + esc(c.what) + (s && s.url ? ' <a href="' + esc(s.url) + '" target="_blank" rel="noopener" class="small">Source</a>' : "") + "</span></li>";
+      return '<li><time datetime="' + c.date + '">' + fmtDate(c.date) + '</time><span class="where">' + c.where + "</span><span>" + esc(c.what) + (s ? " " + link("Source: " + s.pub, s.url) : "") + "</span></li>";
     }).join("");
     $("#changes-count").textContent = D.CHANGES.length;
     $all("[data-verified]").forEach(function (el) { el.textContent = fmtDate(D.VERIFIED); });
   }
 
-  /* ---------- references list (sources view) ---------- */
+  /* ---------- sources view: full reference list, embassy directory ---------- */
   function renderRefs() {
     var host = $("#ref-list");
-    if (!host) return;
     var items = Object.keys(D.SOURCES).map(function (k) { return D.SOURCES[k]; });
-    items.sort(function (a, b) { return a.apa.localeCompare(b.apa); });
-    var label = { official: "Official", secondary: "Secondary", academic: "Academic" };
+    items.sort(function (a, b) { return (a.pub + a.date + a.title).localeCompare(b.pub + b.date + b.title); });
     host.innerHTML = items.map(function (s) {
-      return "<li>" + esc(s.apa) + (s.url ? ' <a href="' + esc(s.url) + '" target="_blank" rel="noopener">' + esc(s.url) + "</a>" : "") + '<span class="t">' + label[s.type] + "</span></li>";
+      return "<li>" + apa(s) + link(s.url, s.url) + ' <span class="t ' + s.type + '">' + (s.type === "official" ? "Official" : "Secondary") + "</span></li>";
     }).join("");
-    var counts = { official: 0, secondary: 0, academic: 0 };
-    items.forEach(function (s) { counts[s.type]++; });
-    $("#ref-counts").textContent = items.length + " sources: " + counts.official + " official, " + counts.secondary + " secondary, " + counts.academic + " academic.";
-  }
+    var off = items.filter(function (s) { return s.type === "official"; }).length;
+    var embCount = 0;
+    Object.keys(EMB).forEach(function (k) { embCount += Object.keys(EMB[k]).length; });
+    var govCount = D.ORIGINS.filter(function (o) { return o.gov; }).length;
+    $("#ref-counts").textContent = items.length + " cited sources (" + off + " official, " + (items.length - off) + " secondary), plus " + embCount + " embassy and consulate pages and " + govCount + " foreign-ministry directories listed below.";
+    $all("[data-count-emb]").forEach(function (el) { el.textContent = embCount; });
+    $all("[data-count-src]").forEach(function (el) { el.textContent = items.length; });
+    $all("[data-count-origins]").forEach(function (el) { el.textContent = D.ORIGINS.length; });
 
-  /* ---------- business case chart ---------- */
-  function renderFinance() {
-    var host = $("#fin-chart");
-    if (!host || host.offsetParent === null) return;
-    columns(host, ["Year 1", "Year 2", "Year 3"], [
-      { name: "Revenue", cls: "s1", values: [49400, 225500, 515000] },
-      { name: "Operating costs", cls: "s2", values: [78000, 190000, 340000] }
-    ], { step: 100000, label: "Projected revenue and operating costs, years 1 to 3" });
+    var names = {};
+    FULL_ORDER.forEach(function (c) { names[c] = D.DEST[c].name; });
+    var sorted = D.ORIGINS.slice().sort(function (a, b) { return a.name.localeCompare(b.name); });
+    $("#emb-list").innerHTML = sorted.map(function (o) {
+      var e = EMB[o.code] || {};
+      var li = FULL_ORDER.filter(function (c) { return e[c]; }).map(function (c) { return "<li><b>" + esc(names[c]) + ":</b> " + link(e[c][0], e[c][1]) + "</li>"; });
+      if (o.gov) li.push("<li><b>Own government:</b> " + link(o.gov[0], o.gov[1]) + "</li>");
+      return "<details><summary>" + esc(o.name) + ' <span class="muted small">' + li.length + " links</span></summary><ul>" + li.join("") + "</ul></details>";
+    }).join("");
   }
 
   /* ---------- routing between views ---------- */
-  var VIEWS = ["tool", "strategy", "sources"];
+  var VIEWS = ["tool", "sources"];
   function route() {
     var id = (location.hash || "#tool").slice(1);
     var el = id ? document.getElementById(id) : null;
@@ -566,7 +665,6 @@
       else a.removeAttribute("aria-current");
     });
     if (view === "tool") renderCompare();
-    if (view === "strategy") renderFinance();
     if (el && el !== viewEl) el.scrollIntoView({ block: "start" });
     else window.scrollTo(0, 0);
   }
@@ -587,6 +685,6 @@
   var rt;
   window.addEventListener("resize", function () {
     clearTimeout(rt);
-    rt = setTimeout(function () { if (!$("#tool").hidden) renderCompare(); renderFinance(); }, 150);
+    rt = setTimeout(function () { if (!$("#tool").hidden) renderCompare(); }, 150);
   });
 })();

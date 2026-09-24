@@ -38,7 +38,7 @@ T/O scale: 0 = high threat, 10 = high opportunity (dot positions from our origin
 
 **Revised impacts**
 - EU harmonisation and national tightening pull in opposite directions, so the number of differences a student must track is growing.
-- We logged 13 rule changes affecting our 8 launch countries between May 2025 and August 2026.
+- We logged 19 rule changes between May 2025 and August 2026: 7 EU-wide, 9 in our 8 full-guide countries and 3 for specific passport countries (see the change log on the website).
 
 **Business implication**
 - Demand for one personalised tool that maps nationality, destination and programme to exact steps.
@@ -240,4 +240,7 @@ Abbreviations used in the text: MESR = Ministère de l'Enseignement supérieur e
 - Notes from Poland. (2025, June 2). *Poland introduces tougher new rules for foreign students and economic migrants*. https://notesfrompoland.com/2025/06/02/poland-introduces-tougher-new-rules-for-foreign-students-and-economic-migrants/
 - QS Quacquarelli Symonds (2025). *Global student flows: Europe*. https://www.qs.com/insights/global-student-flows-europe
 - Study in Sweden. (2026). *New rules for residence permits for studies*. Swedish Institute. https://studyinsweden.se/news/new-rules-for-residence-permits-for-studies/
-- Directive (EU) 2016/801; Regulation (EC) No 810/2009; Regulation (EU) 2016/679; Regulation (EU) 2018/1806: see the full reference list on the website (Sources & AI use).
+- Directive (EU) 2016/801 of the European Parliament and of the Council of 11 May 2016 on the conditions of entry and residence of third-country nationals for the purposes of research, studies, training, voluntary service, pupil exchange schemes or educational projects and au pairing. (2016). *Official Journal of the European Union*, L 132, 21–57. https://eur-lex.europa.eu/eli/dir/2016/801/oj
+- Regulation (EC) No 810/2009 of the European Parliament and of the Council of 13 July 2009 establishing a Community Code on Visas (Visa Code). (2009). *Official Journal of the European Union*, L 243, 1–58. https://eur-lex.europa.eu/eli/reg/2009/810/oj
+- Regulation (EU) 2016/679 of the European Parliament and of the Council of 27 April 2016 (General Data Protection Regulation). (2016). *Official Journal of the European Union*, L 119, 1–88. https://eur-lex.europa.eu/eli/reg/2016/679/oj
+- Regulation (EU) 2018/1806 of the European Parliament and of the Council of 14 November 2018 listing the third countries whose nationals must be in possession of visas when crossing the external borders and those whose nationals are exempt from that requirement (consolidated text of 30 December 2025). https://eur-lex.europa.eu/eli/reg/2018/1806/2025-12-30/eng

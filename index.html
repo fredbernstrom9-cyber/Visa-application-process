@@ -22,7 +22,6 @@
       <a href="#tool">Checker</a>
       <a href="#compare">Compare</a>
       <a href="#changes">What changed</a>
-      <a href="#strategy">Business case</a>
       <a href="#sources">Sources &amp; AI use</a>
     </nav>
   </div>
@@ -38,12 +37,13 @@
       <div class="hero-copy">
         <p class="eyebrow">For students and travellers heading to the EU</p>
         <h1 id="hero-title">Your passport. Your destination. The exact steps.</h1>
-        <p class="lede">Every EU country runs its own student visa process, and the rules keep changing. ClearEntry turns them into one personal checklist, with costs, deadlines and a source for every rule.</p>
+        <p class="lede">Every EU country runs its own student visa process, and the rules keep changing. ClearEntry turns them into one personal checklist, with costs, deadlines and a numbered source for every fact, plus the embassy pages for your passport and destination.</p>
         <div class="trust">
           <span>Rules checked <span data-verified>24 Sep 2026</span></span>
-          <span>18 passports</span>
+          <span><span data-count-origins>43</span> passports</span>
           <span>27 EU countries</span>
-          <span>Every rule linked to its source</span>
+          <span><span data-count-emb>150</span> embassy pages</span>
+          <span>Every fact numbered and cited</span>
         </div>
       </div>
 
@@ -103,7 +103,7 @@
 
           <section class="panel" aria-labelledby="docs-h">
             <div class="panel-head">
-              <h3 id="docs-h">Document checklist</h3>
+              <h3 id="docs-h">Document checklist<span id="r-docs-cite"></span></h3>
               <span class="eyebrow" id="r-progress-label"></span>
             </div>
             <div class="panel-body">
@@ -117,7 +117,7 @@
 
           <div class="scam">
             <h3>Protect yourself from scams</h3>
-            <p class="small">Governments never sell "guaranteed" visas. Book appointments only through the official site or the visa centre it names, never through resellers. Pay fees only on official portals. Every link on this page goes to an official source.</p>
+            <p class="small">Governments never sell "guaranteed" visas. Book appointments only through the official site or the visa centre it names, never through resellers. Pay fees only on official portals. The embassy links under "Sources" at the bottom of this result go to official government websites.</p>
           </div>
         </div>
 
@@ -139,16 +139,32 @@
             <div class="panel-head"><h3 id="links-h">Official links</h3></div>
             <div class="panel-body"><ul class="links" id="r-links"></ul></div>
           </section>
-
-          <section class="panel" aria-labelledby="src-h">
-            <div class="panel-head"><h3 id="src-h">Where this comes from</h3></div>
-            <div class="panel-body">
-              <ul class="refs" id="r-sources"></ul>
-              <p class="small muted"><span class="conf official">Official source</span> confirmed on a government or EU site · <span class="conf multi">2+ sources</span> confirmed by at least two independent sources · <span class="conf check">Verify</span> single source or sources disagree.</p>
-            </div>
-          </section>
         </aside>
       </div>
+
+      <section class="panel result-sources" id="r-refs" aria-labelledby="refs-title">
+        <div class="panel-head">
+          <h3 id="refs-title">Sources</h3>
+          <span class="eyebrow" id="r-refs-count"></span>
+        </div>
+        <div class="panel-body">
+          <div class="src-grid">
+            <div class="src-box">
+              <h4 id="r-emb-h">Embassy / where to apply</h4>
+              <ul class="links" id="r-emb"></ul>
+              <p class="small muted" id="r-emb-note"></p>
+            </div>
+            <div class="src-box">
+              <h4 id="r-gov-h">Your government</h4>
+              <ul class="links" id="r-gov"></ul>
+              <p class="small muted">Your own foreign ministry lists your country's embassy in the destination, for passport problems and emergencies.</p>
+            </div>
+          </div>
+          <h4>Cited in this result</h4>
+          <ol class="refs numbered" id="r-sources"></ol>
+          <p class="small muted">Numbers in square brackets above link here. <span class="conf official">Official source</span> confirmed on a government or EU site · <span class="conf multi">2+ sources</span> confirmed by at least two independent sources · <span class="conf check">Verify</span> single source or sources disagree. The full list is under <a href="#src-refs">Sources &amp; AI use</a>.</p>
+        </div>
+      </section>
       <p class="small muted">ClearEntry gives general information, not legal advice. Rules can change after the date shown. Always confirm with the official link before you pay or apply.</p>
     </section>
 
@@ -161,11 +177,11 @@
       </div>
       <div class="table-wrap">
         <table class="grid">
-          <thead><tr><th scope="col">Destination</th><th scope="col">Entry route</th><th scope="col">Funds / month</th><th scope="col">Work while studying</th><th scope="col">After graduating</th><th scope="col">Non-EU tuition / year (indicative)</th></tr></thead>
+          <thead><tr><th scope="col">Destination</th><th scope="col">Entry route</th><th scope="col">Funds / month</th><th scope="col">Known official fees</th><th scope="col">Work while studying</th><th scope="col">After graduating</th></tr></thead>
           <tbody id="cmp-body"></tbody>
         </table>
       </div>
-      <p class="small muted" style="margin-top:8px">* Converted to euros at about 11.0 SEK and 4.25 PLN per euro (September 2026). † Most public universities charge no tuition; Baden-Württemberg and some universities charge non-EU students. Ireland shows €833 because it requires €10,000 a year.</p>
+      <p class="small muted" style="margin-top:8px">* Converted to euros at about 11.0 SEK and 4.25 PLN per euro (September 2026). Ireland shows €833 because it requires €10,000 for an academic year; Italy's yearly amount is shown per month. Fees are visa and residence-permit fees for your passport; "+" means at least one more fee is set per country (see the full guide). Tuition is set by each institution and is not shown. Every figure is cited in the country's full guide above.</p>
 
       <figure class="chart" id="cmp-chart" style="margin:24px 0 0">
         <figcaption style="display:grid;gap:4px;margin-bottom:10px">
@@ -179,12 +195,12 @@
     <!-- changes -->
     <section class="section" id="changes" aria-labelledby="changes-h">
       <div class="section-head">
-        <p class="eyebrow">Why this product exists</p>
+        <p class="eyebrow">Change log</p>
         <h2 id="changes-h">What changed in the last 16 months</h2>
-        <p class="lede">We logged every rule change affecting our launch countries between May 2025 and August 2026. Any guide written a year ago is now wrong on at least one of these.</p>
+        <p class="lede">Every rule change we found between May 2025 and August 2026 that affects the countries in this checker, each linked to its source. A guide written a year ago will be out of date on several of these.</p>
       </div>
       <div class="stat-row">
-        <div class="stat"><span class="v" id="changes-count">13</span><span class="k">rule changes logged, May 2025 – Aug 2026</span></div>
+        <div class="stat"><span class="v" id="changes-count">19</span><span class="k">rule changes logged, May 2025 – Aug 2026</span></div>
         <div class="stat"><span class="v">+43%</span><span class="k">France: funds to prove rose from €615 to €877.50 a month (1 Aug 2026)</span></div>
         <div class="stat"><span class="v">+46.5%</span><span class="k">Italy: funds to prove rose from €6,947 to €10,180 a year (2026/27)</span></div>
       </div>
@@ -194,467 +210,16 @@
 </div>
 
 <!-- =============================================================== -->
-<!-- VIEW 2: BUSINESS CASE                                            -->
-<!-- =============================================================== -->
-<div id="strategy" data-view hidden>
-  <div class="wrap report">
-    <nav class="toc" aria-label="Business case contents">
-      <span class="eyebrow">Business case</span>
-      <a href="#bc-summary">Summary</a>
-      <a href="#bc-problem">1. Problem &amp; users</a>
-      <a href="#bc-pestel">2. PESTEL</a>
-      <a href="#bc-forces">3. Five Forces</a>
-      <a href="#bc-competitors">4. Competitors</a>
-      <a href="#bc-vrio">5. Resources (VRIO)</a>
-      <a href="#bc-value">6. Value proposition</a>
-      <a href="#bc-swot">7. SWOT &amp; TOWS</a>
-      <a href="#bc-model">8. Business model</a>
-      <a href="#bc-mix">9. Marketing mix</a>
-      <a href="#bc-growth">10. Growth strategy</a>
-      <a href="#bc-finance">11. Costs &amp; revenue</a>
-      <a href="#bc-org">12. Organisation &amp; people</a>
-      <a href="#bc-innovation">13. Innovation</a>
-      <a href="#bc-expansion">14. International expansion</a>
-      <a href="#bc-ethics">15. Sustainability &amp; ethics</a>
-      <a href="#bc-limits">16. Limits of our analysis</a>
-      <a href="#bc-next">17. Next steps</a>
-    </nav>
-
-    <div class="article">
-      <section id="bc-summary" aria-labelledby="bc-summary-h">
-        <p class="eyebrow">Business Organisation · Group project</p>
-        <h1 id="bc-summary-h">ClearEntry business case</h1>
-        <p class="lede">Visa rules for studying in the EU are split across 27 national systems and change often. ClearEntry turns them into one personal, dated and sourced checklist based on passport, destination and purpose.</p>
-        <div class="callout">
-          <h3>In one paragraph</h3>
-          <p>About 549,400 non-EU citizens received a first EU residence permit for education in 2024 <span class="cite">(Eurostat, 2025b)</span>, and Schengen consulates received over 12 million short-stay visa applications in 2025, refusing 14.6% <span class="cite">(European Commission, 2026d)</span>. Rules are fragmented and moving: we logged 13 changes affecting our launch countries in 16 months. We launch with a free checker for 18 passports and all 27 EU countries (8 in depth). We earn money from universities, which lose admitted students to visa problems, and from an optional paid document check. We never sell visa appointments or pay-for-ranking.</p>
-        </div>
-      </section>
-
-      <!-- 1 PROBLEM -->
-      <section id="bc-problem" aria-labelledby="bc-problem-h">
-        <span class="label-num">Section 1 · Sessions 1–2</span>
-        <h2 id="bc-problem-h">Problem and users</h2>
-        <p>Our first workable problem, revised with stronger sources. Changes from our first draft are marked "Revised".</p>
-        <div class="table-wrap">
-          <table class="grid">
-            <tbody>
-              <tr><th scope="row">Problem</th><td>Uncertainty about visa requirements costs students and travellers time and money. Unclear or outdated information leads to delayed or refused applications.</td></tr>
-              <tr><th scope="row">Goal</th><td>Remove the uncertainty that causes avoidable refusals and missed intakes.</td></tr>
-              <tr><th scope="row">Root causes</th><td>Long-stay (student) visas are national, so there are 27 procedures with no shared format. Information is spread across ministries, consulates, visa centres and universities, and rules change by decree at short notice. <strong>Revised:</strong> France applied a new funds threshold five weeks after publishing it <span class="cite">(InfoMigrants, 2026)</span>.</td></tr>
-              <tr><th scope="row">Who is affected</th><td>Primary: non-EU students aged 18–30 applying for a degree in the EU for the first time. Secondary: travellers and families on short stays. Paying customer: universities' international offices.</td></tr>
-              <tr><th scope="row">Size and evidence</th><td>1.76 million students from abroad were in EU tertiary education in 2023 <span class="cite">(Eurostat, 2025a)</span>; 549,400 first residence permits were issued for education in 2024 <span class="cite">(Eurostat, 2025b)</span>. Short-stay refusals cost applicants €145 million in non-refundable fees in 2024, €60 million of it paid by Africans <span class="cite">(CNN, 2025)</span>. <strong>Revised:</strong> in 2025, refusal rates approached 48% for Nigerians and passed 51% for Senegalese applicants, against a 14.6% average <span class="cite">(European Commission, 2026d)</span>.</td></tr>
-              <tr><th scope="row">Segment detail</th><td>Age 18+; nationalities with weaker passports; mostly applicants from developing economies, for whom a refusal is expensive relative to income.</td></tr>
-              <tr><th scope="row">Current alternatives</th><td>Embassy and consulate websites, national study agencies (Campus France, DAAD), education agents, travel-visa platforms, general AI chatbots.</td></tr>
-              <tr><th scope="row">Direct competitors</th><td>Expert visa firms; AI-powered visa platforms such as Atlys (short-stay focus).</td></tr>
-            </tbody>
-          </table>
-        </div>
-        <div class="callout crit">
-          <h3>Critical note on our own evidence</h3>
-          <ul>
-            <li>The "up to 50% rejection" figure in our first draft describes <em>short-stay</em> visas for some African nationalities. No EU-wide statistic exists for <em>student</em> visa refusals, so we no longer present it as a student figure.</li>
-            <li>Two of our original sources (GradPilot, ImmigCanada) are commercial blogs. We replaced them with European Commission and Eurostat data and kept commercial sources only where a second source agrees.</li>
-            <li>Not every refusal is an information problem. Refusal rates track applicants' income levels <span class="cite">(CNN, 2025)</span>, so ClearEntry can prevent <em>avoidable</em> refusals (missing documents, wrong procedure, outdated amounts), not structural ones. We say so to users.</li>
-          </ul>
-        </div>
-      </section>
-
-      <!-- 2 PESTEL -->
-      <section id="bc-pestel" aria-labelledby="bc-pestel-h">
-        <span class="label-num">Section 2 · Session 2 · Macro-environment</span>
-        <h2 id="bc-pestel-h">PESTEL: completed and revised (September 2026)</h2>
-        <p>Our group drafted the Political, Economic, Social and Technological rows. We have now added the Environmental and Legal rows and filled in every "Revised" column after re-checking the facts in September 2026. Revised columns are shaded. Scores run from 0 (high threat) to 10 (high opportunity).</p>
-        <div class="pestel-key"><span><span class="to-dot orig"></span>Original rating</span><span><span class="to-dot rev"></span>Revised rating</span><span class="muted">The table scrolls sideways: 8 columns, as in our template.</span></div>
-        <div class="table-wrap">
-          <table class="grid pestel">
-            <thead>
-              <tr><th scope="col">Factor</th><th scope="col">Key facts &amp; 24-month outlook</th><th scope="col">Revised / additional facts</th><th scope="col">Impact on the problem</th><th scope="col">Revised impacts</th><th scope="col">Business implication</th><th scope="col">Revised business implication</th><th scope="col">Threat / Opportunity</th></tr>
-            </thead>
-            <tbody>
-              <tr>
-                <th scope="row">Political</th>
-                <td><ul><li>Studying in the EU for more than 90 days needs a national long-stay visa from the country of study, plus a residence permit after arrival. There is no single EU student visa.</li><li>The EU Visa Strategy (Jan 2026) plans a Visa Code revision and may amend the EU student and researcher rules.</li><li>The EU online visa platform is expected around 2028; member states can opt out for up to 7 years.</li><li>Outlook: more EU digitalisation, but national rules stay fragmented.</li></ul></td>
-                <td class="rev"><ul><li>Confirmed: the Commission adopted its first Visa Strategy on 29 Jan 2026, with a Recommendation asking states for simpler, digital long-stay procedures and a 30-day target <span class="cite">(European Commission, 2026a)</span>. Recommendations are not binding.</li><li>National governments moved the other way: France raised funds by 43% <span class="cite">(InfoMigrants, 2026)</span>, Sweden capped student work at 15 h/week <span class="cite">(Study in Sweden, 2026)</span>, Poland added B2 language proof <span class="cite">(Notes from Poland, 2025)</span>.</li><li>Visa-free travel for Qatar and Kuwait was proposed in 2022 and is still pending <span class="cite">(European Commission, 2022)</span>.</li></ul></td>
-                <td><ul><li>No single source: each country has its own portal, documents and sequence.</li><li>New EU systems (EES, ETIAS) blur what applies to a student.</li></ul></td>
-                <td class="rev"><ul><li>EU harmonisation and national tightening pull in opposite directions, so the number of differences a student must track is growing.</li><li>We logged 13 rule changes affecting our launch countries between May 2025 and Aug 2026.</li></ul></td>
-                <td><ul><li>Demand for one personalised tool that maps nationality, destination and programme to exact steps.</li><li>Needs a country rulebook kept current, with "last verified" dates.</li></ul></td>
-                <td class="rev"><ul><li>Monthly monitoring of national gazettes and ministry pages, with a public change log.</li><li>Position as the layer that joins up 27 national systems, not as a rival to any government portal.</li></ul></td>
-                <td><div class="to"><div class="to-track"><span class="to-dot orig" style="left:70%"></span><span class="to-dot rev" style="left:70%"></span></div><div class="to-ends"><span>Threat</span><span>Opportunity</span></div><span class="to-text"><strong>High opportunity</strong> 7 → 7. The 2028 EU platform covers short-stay visas only, not national student permits.</span></div></td>
-              </tr>
-              <tr>
-                <th scope="row">Economic</th>
-                <td><ul><li>Europe's international enrolments are projected to grow about 5% a year to 2030, faster than the US, UK, Canada or Australia.</li><li>Euro-area growth forecast at only 0.9% in 2026, inflation around 3% after a new energy shock.</li><li>France raises non-EU tuition for 2026/27 to €2,895 (bachelor) and €3,941 (master), from about €178 and €254 before.</li><li>Outlook: more applicants, each facing higher costs.</li></ul></td>
-                <td class="rev"><ul><li>Confirmed: 5% a year for Europe vs 3.5% for the UK and between 2% and −1% for the US, Canada and Australia <span class="cite">(QS, 2025)</span>.</li><li>US visa delays are projected to cut foreign enrolment by 100,000+ this autumn <span class="cite">(ICEF Monitor, 2026c)</span>.</li><li>Funds thresholds jumped: France €615 → €877.50 a month; Italy €6,947 → €10,180 a year <span class="cite">(InfoMigrants, 2026; ConnectSaqib, 2026)</span>.</li><li>Tuition confirmed; exemptions capped at 30% <span class="cite">(MESR, 2026)</span>.</li><li>Still unsourced: the 0.9% growth and 3% inflation figures. Cite the European Commission or ECB forecast, or remove them.</li></ul></td>
-                <td><ul><li>Money requirements (funds proof, fees, tuition) vary and are rising, so mistakes cost more.</li><li>A refusal means paying fees again on reapplication.</li></ul></td>
-                <td class="rev"><ul><li>A student going to France or Italy must now show roughly €3,000 more per year than a year ago. An outdated figure leads straight to a refusal.</li><li>Rejected short-stay applicants paid €145 million in fees in 2024 <span class="cite">(CNN, 2025)</span>.</li></ul></td>
-                <td><ul><li>Value proposition: prevent costly mistakes by showing the full cost and funds proof per country upfront.</li><li>Demand grows as students pivot to Europe.</li></ul></td>
-                <td class="rev"><ul><li>"Cash to line up before you apply" is now a headline feature of the checker.</li><li>Keep the core free (students are cost-sensitive) and charge universities, which lose tuition when admits miss the start.</li></ul></td>
-                <td><div class="to"><div class="to-track"><span class="to-dot orig" style="left:40%"></span><span class="to-dot rev" style="left:60%"></span></div><div class="to-ends"><span>Threat</span><span>Opportunity</span></div><span class="to-text"><strong>Mixed, leaning opportunity</strong> 4 → 6. Rising costs raise the value of getting it right first time.</span></div></td>
-              </tr>
-              <tr>
-                <th scope="row">Social</th>
-                <td><ul><li>Visa uncertainty and affordability are students' top concerns in 2026; students weigh more destinations, including Europe.</li><li>Students use university websites, agents, friends and family, and increasingly social media and AI tools, but trust university websites more than AI.</li><li>Surveys in major Western European countries show majorities saying immigration has been too high.</li><li>Outlook: anxiety persists; more first-time applicants head to Europe.</li></ul></td>
-                <td class="rev"><ul><li>Confirmed by a survey of 870 agents in 64 countries (May 2026); 68% say students are more likely to drop plans because of cost <span class="cite">(ICEF Monitor, 2026a)</span>. This measures agents' views, not students' directly.</li><li>Visa uncertainty lowers the perceived return on study abroad <span class="cite">(ICEF Monitor, 2026b)</span>.</li><li>"Trust websites more than AI" and "immigration too high" still need a cited survey covering international applicants. We treat both as hypotheses to test.</li></ul></td>
-                <td><ul><li>Anxious first-timers rely on peers, agents, social media and AI, which may be outdated or wrong.</li><li>Reliance on agents and scams makes trustworthy guidance scarce and mistakes, such as fake documents, more likely.</li></ul></td>
-                <td class="rev"><ul><li>Anxiety is highest where information is least reliable (informal channels).</li><li>Parents and sponsors also need to understand the funds rules, since they often provide the money.</li></ul></td>
-                <td><ul><li>Serve anxious first-timers with one clear, personalised, plain-language checklist.</li><li>Competes for attention with free social and AI channels.</li></ul></td>
-                <td class="rev"><ul><li>Plain language, a legibility-first typeface, "last checked" dates and official links as trust signals.</li><li>Shareable checklist for sponsors; Hindi, Mandarin and Arabic versions on the roadmap.</li><li>Distribute through universities, the source students already trust.</li></ul></td>
-                <td><div class="to"><div class="to-track"><span class="to-dot orig" style="left:80%"></span><span class="to-dot rev" style="left:80%"></span></div><div class="to-ends"><span>Threat</span><span>Opportunity</span></div><span class="to-text"><strong>High opportunity</strong> 8 → 8.</span></div></td>
-              </tr>
-              <tr>
-                <th scope="row">Technological</th>
-                <td><ul><li>EU countries digitalise visa services unevenly. Germany's Consular Services Portal covers national visas at all 167 visa sections; France routes most residence permits through ANEF.</li><li>ETIAS has slipped; the online Schengen visa platform is expected around 2028.</li><li>Students already use AI heavily for search; most AI users rate its guidance as good as traditional sources.</li><li>Outlook: more automation on both sides.</li></ul></td>
-                <td class="rev"><ul><li>EES fully operational since 10 April 2026 <span class="cite">(European Commission, 2026b)</span>.</li><li>ETIAS now has no launch date; the late-2026 target was removed in July 2026 <span class="cite">(Fragomen, 2026)</span>.</li><li>More procedures online: Poland's MOS system, Sweden's online permits, Dutch university-led IND filing.</li><li>AI Act Article 50: from 2 Aug 2026, chatbots must tell users they are talking to AI <span class="cite">(European Commission, 2026c)</span>.</li></ul></td>
-                <td><ul><li>Each country's portal, sequence and steps differ, so students learn a new system per destination.</li><li>New failure points: outdated AI answers, bot-resold appointments.</li></ul></td>
-                <td class="rev"><ul><li>Our 8 launch countries alone use at least 8 different application portals.</li><li>The ETIAS delay opens a scam window: fake "ETIAS" sites charge for a system that does not exist yet.</li></ul></td>
-                <td><ul><li>Cheap, scalable tech makes personalised checklists feasible.</li><li>Deep-link to official portals so users can act.</li></ul></td>
-                <td class="rev"><ul><li>Use a structured rules engine, not a free-text chatbot, so every answer traces to a dated source.</li><li>Any future AI assistant must be grounded in the verified rulebook and disclose that it is AI.</li></ul></td>
-                <td><div class="to"><div class="to-track"><span class="to-dot orig" style="left:90%"></span><span class="to-dot rev" style="left:80%"></span></div><div class="to-ends"><span>Threat</span><span>Opportunity</span></div><span class="to-text"><strong>High opportunity</strong> 9 → 8. Free AI tools and better government portals compete for the same questions.</span></div></td>
-              </tr>
-              <tr>
-                <th scope="row">Environmental <span class="chip info" style="font-size:.6rem">New</span></th>
-                <td><ul><li>About 4 in 10 international students actively research a university's sustainability efforts <span class="cite">(ICEF Monitor, 2023)</span>.</li><li>Students and educators want to cut the carbon footprint of international education, which is dominated by flights, but report barriers <span class="cite">(ICEF Monitor, 2025)</span>.</li><li>Most visa procedures still need an in-person biometrics appointment, often a long journey in large countries.</li><li>Digital services use energy too: data-centre electricity use is projected to roughly double by 2030, partly because of AI <span class="cite">(IEA, 2025)</span>.</li><li>Outlook: more online procedures (EU platform around 2028) cut paper and travel.</li></ul></td>
-                <td class="rev"><ul><li>Evidence gap: we found no reliable data on the emissions caused by repeat consular trips or cancelled travel after refusals.</li></ul></td>
-                <td><ul><li>An indirect driver. An incomplete or refused application means repeat trips to visa centres, rebooked flights and wasted travel, which costs money and carbon.</li></ul></td>
-                <td class="rev"><ul><li>Low direct impact on the core problem; the main link is avoidable repeat journeys.</li></ul></td>
-                <td><ul><li>"Get it right at the first appointment" avoids repeat journeys.</li><li>Lightweight static website, no always-on AI.</li><li>Sustainability angle for universities' reporting.</li></ul></td>
-                <td class="rev"><ul><li>Measure before we claim: track avoided repeat appointments through user surveys, so the benefit is evidenced, not greenwashing.</li></ul></td>
-                <td><div class="to"><div class="to-track"><span class="to-dot orig" style="left:50%"></span><span class="to-dot rev" style="left:60%"></span></div><div class="to-ends"><span>Threat</span><span>Opportunity</span></div><span class="to-text"><strong>Mixed</strong> 5 → 6. A digital-first, low-footprint service fits student and university values.</span></div></td>
-              </tr>
-              <tr>
-                <th scope="row">Legal <span class="chip info" style="font-size:.6rem">New</span></th>
-                <td><ul><li>Directive (EU) 2016/801 gives students common rights: work at least 15 h/week, at least 9 months to look for work after graduating, intra-EU mobility. States still set funds, fees and procedures; Denmark and Ireland are not bound.</li><li>The Visa Code sets the €90 short-stay fee, a 15-day decision time and fee waivers for students on study trips <span class="cite">(Regulation 810/2009)</span>; Regulation 2018/1806 decides who needs a visa.</li><li>GDPR covers passport, nationality and travel data <span class="cite">(Regulation 2016/679)</span>.</li><li>AI Act: transparency duties from 2 Aug 2026; AI used by authorities in migration is high-risk.</li><li>Outlook: Visa Code revision and possible changes to the students directive.</li></ul></td>
-                <td class="rev"><ul><li>National rules change by decree at short notice: France's Decree 2026-526 was published on 24 June and applied from 1 August 2026 <span class="cite">(Kohen, 2026)</span>.</li><li>We have not yet had a lawyer check whether giving individual immigration advice is a regulated activity in each launch country, so the product gives general information only.</li></ul></td>
-                <td><ul><li>The legal complexity is the problem itself.</li><li>Changes at short notice catch careful applicants out between preparing and submitting.</li></ul></td>
-                <td class="rev"><ul><li>Liability risk: if our information is wrong and causes a refusal, a user could claim damages.</li></ul></td>
-                <td><ul><li>"Information, not legal advice" terms; source and date on every rule.</li><li>Privacy by design: the checker runs in the browser and stores nothing on a server.</li></ul></td>
-                <td class="rev"><ul><li>Maker-checker verification, professional indemnity insurance, lawyer partners for premium reviews.</li><li>Legal review of terms in each launch country before charging users.</li></ul></td>
-                <td><div class="to"><div class="to-track"><span class="to-dot orig" style="left:40%"></span><span class="to-dot rev" style="left:40%"></span></div><div class="to-ends"><span>Threat</span><span>Opportunity</span></div><span class="to-text"><strong>Mixed, leaning threat</strong> 4 → 4. Complexity creates demand; liability and compliance costs are real.</span></div></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <div class="callout">
-          <h3>So what?</h3>
-          <p>Four of six factors score as opportunities. The two that do not (Legal, and Economic for the student's wallet) are the same forces that make accurate guidance valuable. The strategic answer is to <strong>turn verification into the product</strong>: dated, sourced rules, updated faster than anyone else.</p>
-        </div>
-      </section>
-
-      <!-- 3 FIVE FORCES -->
-      <section id="bc-forces" aria-labelledby="bc-forces-h">
-        <span class="label-num">Section 3 · Session 3 · Industry analysis</span>
-        <h2 id="bc-forces-h">Five Forces: digital visa and study-abroad guidance</h2>
-        <p>Industry defined as services that help non-EU individuals understand and complete EU entry and residence procedures <span class="cite">(Porter, 2008)</span>.</p>
-        <div class="forces">
-          <div class="force" style="grid-area:ent"><h4>Threat of new entrants <span class="rating high">High</span></h4><p>Low capital needs; AI makes content cheap to produce. Barriers are trust, verified data and university relationships, which take years to build.</p></div>
-          <div class="force" style="grid-area:sup"><h4>Supplier power <span class="rating high">High</span></h4><p>Governments "supply" the rules and can change them or launch their own tools. Visa-centre operators (VFS, TLS, BLS) control appointments.</p></div>
-          <div class="force center" style="grid-area:riv"><h4>Rivalry <span class="rating">Medium</span></h4><p>Many players, but most focus on short-stay tourist visas or one country. Few cover long-stay study across the EU in a neutral way.</p></div>
-          <div class="force" style="grid-area:buy"><h4>Buyer power <span class="rating high">High</span></h4><p>Students: price-sensitive, with free alternatives. Universities: fewer, larger buyers, but with a real compliance need (they sponsor or vouch for students).</p></div>
-          <div class="force" style="grid-area:sub"><h4>Threat of substitutes <span class="rating high">High</span></h4><p>Official websites, international offices, agents (free to students, paid by universities), ChatGPT-style assistants, social media.</p></div>
-        </div>
-        <div class="callout">
-          <h3>Implication</h3>
-          <p>Generic visa information is an unattractive business: substitutes are free and entry is easy. Profit sits where we can create switching costs (university integrations) and a defensible capability (a verification routine), which shapes sections 5 and 8. Governments also act as <em>complementors</em>: better official portals make deep links from our checklist more useful.</p>
-        </div>
-      </section>
-
-      <!-- 4 COMPETITORS -->
-      <section id="bc-competitors" aria-labelledby="bc-competitors-h">
-        <span class="label-num">Section 4 · Session 7 · Positioning</span>
-        <h2 id="bc-competitors-h">Competitors and positioning</h2>
-        <div class="table-wrap">
-          <table class="grid">
-            <thead><tr><th scope="col">Player</th><th scope="col">What they offer</th><th scope="col">Revenue model</th><th scope="col">Scope</th><th scope="col">Gap we fill</th></tr></thead>
-            <tbody>
-              <tr><th scope="row">Official portals (EU Immigration Portal, France-Visas, IND, Migrationsverket)</th><td>Authoritative rules</td><td>Public, free</td><td>One country, or generic EU</td><td>No cross-country sequence, full cost or comparison</td></tr>
-              <tr><th scope="row">National study agencies (Campus France, DAAD, Study in NL)</th><td>Promotion and admissions help</td><td>Public; some procedure fees</td><td>One country</td><td>Not neutral between countries</td></tr>
-              <tr><th scope="row">Education agents (e.g. IDP, local agencies)</th><td>Admissions and visa help</td><td>Commissions from universities, sometimes student fees</td><td>Partner universities</td><td>Incentives tied to commissions; quality varies</td></tr>
-              <tr><th scope="row">Travel-visa platforms (e.g. Atlys, VisaHQ, iVisa)</th><td>Short-stay visa processing</td><td>Service fee per application</td><td>Tourist and business trips</td><td>Little on long-stay study permits</td></tr>
-              <tr><th scope="row">B2B entry-rules data (e.g. Sherpa, IATA Timatic)</th><td>Entry rules for airlines and travel sites</td><td>API licences</td><td>Short-stay entry</td><td>Not built for a months-long student process</td></tr>
-              <tr><th scope="row">General AI assistants</th><td>Conversational answers</td><td>Free or subscription</td><td>Anything</td><td>No verification date, source or accountability</td></tr>
-              <tr class="is-selected"><th scope="row">ClearEntry</th><td>Personal, dated, sourced checklist; costs; comparison</td><td>Free for students; universities pay; optional €39 check</td><td>EU study and short stays, 27 countries</td><td>n/a</td></tr>
-            </tbody>
-          </table>
-        </div>
-        <figure class="chart" style="margin:0">
-          <figcaption style="display:grid;gap:4px;margin-bottom:10px"><h3>Perceptual map</h3><span class="small muted">Our group's qualitative judgement, not measured data.</span></figcaption>
-          <svg viewBox="0 0 640 360" role="img" aria-label="Perceptual map: ClearEntry sits alone in the long-stay study and personalised, verified quadrant">
-            <line class="axis" x1="320" y1="20" x2="320" y2="330"/>
-            <line class="axis" x1="30" y1="175" x2="610" y2="175"/>
-            <text class="tick" x="36" y="192">Short trips</text>
-            <text class="tick" x="604" y="192" text-anchor="end">Long-stay study</text>
-            <text class="tick" x="328" y="30">Personalised &amp; verified</text>
-            <text class="tick" x="328" y="326">Generic</text>
-            <circle cx="470" cy="70" r="7" class="bar s1" style="fill:var(--viz-1)"/><text class="lbl sel" x="482" y="75">ClearEntry</text>
-            <circle cx="150" cy="95" r="6" style="fill:var(--viz-muted)"/><text class="lbl" x="162" y="100">Travel-visa platforms</text>
-            <circle cx="120" cy="150" r="6" style="fill:var(--viz-muted)"/><text class="lbl" x="132" y="155">B2B entry-rules data</text>
-            <circle cx="470" cy="230" r="6" style="fill:var(--viz-muted)"/><text class="lbl" x="482" y="235">Official portals</text>
-            <circle cx="520" cy="140" r="6" style="fill:var(--viz-muted)"/><text class="lbl" x="440" y="130">Agents</text>
-            <circle cx="400" cy="275" r="6" style="fill:var(--viz-muted)"/><text class="lbl" x="412" y="280">National study agencies</text>
-            <circle cx="200" cy="290" r="6" style="fill:var(--viz-muted)"/><text class="lbl" x="212" y="295">General AI assistants</text>
-          </svg>
-        </figure>
-      </section>
-
-      <!-- 5 VRIO -->
-      <section id="bc-vrio" aria-labelledby="bc-vrio-h">
-        <span class="label-num">Section 5 · Sessions 4–5 · Resource-based view</span>
-        <h2 id="bc-vrio-h">Resources and capabilities (VRIO)</h2>
-        <p>Following the resource-based view <span class="cite">(Barney, 1991)</span>, our advantage comes from how we verify, not from the software.</p>
-        <div class="table-wrap">
-          <table class="grid">
-            <thead><tr><th scope="col">Resource / capability</th><th scope="col">Valuable</th><th scope="col">Rare</th><th scope="col">Hard to imitate</th><th scope="col">Organised</th><th scope="col">Result</th></tr></thead>
-            <tbody>
-              <tr><th scope="row">Verified rulebook (structured, sourced, dated)</th><td>Yes</td><td>Yes, today</td><td>Partly: data can be copied</td><td>Yes</td><td>Temporary advantage</td></tr>
-              <tr><th scope="row">Verification routine (monitoring, maker-checker, public change log)</th><td>Yes</td><td>Yes</td><td>Yes: tacit, takes time to build</td><td>Yes</td><td><strong>Sustained advantage</strong></td></tr>
-              <tr><th scope="row">University partnerships and integrations</th><td>Yes</td><td>Yes</td><td>Yes: trust and contracts take years</td><td>To build</td><td><strong>Sustained advantage (potential)</strong></td></tr>
-              <tr><th scope="row">Multilingual team with lived visa experience</th><td>Yes</td><td>Partly</td><td>Partly</td><td>Yes</td><td>Temporary advantage</td></tr>
-              <tr><th scope="row">Rules-engine software</th><td>Yes</td><td>No</td><td>No</td><td>Yes</td><td>Competitive parity</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <!-- 6 VALUE PROPOSITION -->
-      <section id="bc-value" aria-labelledby="bc-value-h">
-        <span class="label-num">Section 6 · Session 4 · Users to value proposition</span>
-        <h2 id="bc-value-h">Value proposition</h2>
-        <p>Value Proposition Canvas <span class="cite">(Osterwalder et al., 2014)</span> for our primary segment, first-time non-EU degree students.</p>
-        <div class="two">
-          <div class="card"><h4>Customer profile</h4>
-            <p><strong>Jobs:</strong> choose a destination; get admitted; get the visa in time; prove funds; arrive legally; register and renew; work part-time; stay after graduating.</p>
-            <p><strong>Pains:</strong> conflicting and outdated information; fear of refusal; hidden costs; losing fees and an intake; scam agents; scarce appointments; bureaucratic language.</p>
-            <p><strong>Gains:</strong> certainty; one list; knowing the total cost early; being able to compare countries; reassurance for parents who pay.</p>
-          </div>
-          <div class="card" style="border-color:var(--accent)"><h4>Value map</h4>
-            <p><strong>Products:</strong> personal checklist; cost panel; comparison view; change log; official links.</p>
-            <p><strong>Pain relievers:</strong> a date and a source on every rule; a "verify" badge where sources disagree; scam warnings; steps in the right order with timing.</p>
-            <p><strong>Gain creators:</strong> compare by funds, work rights and post-study stay; progress tracking; a checklist you can copy and send to a sponsor.</p>
-          </div>
-        </div>
-        <div class="two">
-          <div class="card"><span class="label-num">Illustrative persona</span><h4>Aarav, 22, Pune</h4><p>Admitted to a master's in Lyon. His agent still quotes €615 a month; the new rule is €877.50. ClearEntry flags the change before he books his visa appointment.</p></div>
-          <div class="card"><span class="label-num">Illustrative persona</span><h4>Layla, 19, Riyadh</h4><p>Wants a two-week summer course in Madrid. ClearEntry shows she needs a Schengen visa, that students on study trips pay no visa fee, and that she may qualify for a five-year multiple-entry visa.</p></div>
-        </div>
-      </section>
-
-      <!-- 7 SWOT -->
-      <section id="bc-swot" aria-labelledby="bc-swot-h">
-        <span class="label-num">Section 7 · Strategic diagnosis</span>
-        <h2 id="bc-swot-h">SWOT and TOWS strategies</h2>
-        <div class="swot">
-          <div class="s"><h4>Strengths</h4><ul><li>Focus on EU long-stay study, a niche others under-serve</li><li>Every rule dated and sourced</li><li>Personal by passport; free core product</li><li>Low-cost static technology</li></ul></div>
-          <div class="w"><h4>Weaknesses</h4><ul><li>Small team: only 8 of 27 countries in depth</li><li>No brand yet; unproven revenue model</li><li>No legal accreditation</li><li>Verification is a point-in-time snapshot</li></ul></div>
-          <div class="o"><h4>Opportunities</h4><ul><li>Europe's enrolments growing 5% a year <span class="cite">(QS, 2025)</span></li><li>Students diverted from the US <span class="cite">(ICEF Monitor, 2026c)</span></li><li>Frequent rule changes (13 in 16 months)</li><li>Universities need well-prepared admits</li></ul></div>
-          <div class="t"><h4>Threats</h4><ul><li>Free substitutes: official portals and AI chatbots</li><li>Governments' own platforms (EU platform around 2028)</li><li>Liability for wrong information</li><li>Large players (agents, platforms) adding similar features</li></ul></div>
-        </div>
-        <div class="table-wrap">
-          <table class="grid">
-            <thead><tr><th scope="col">TOWS</th><th scope="col">Strategy</th></tr></thead>
-            <tbody>
-              <tr><th scope="row">SO (use strengths to seize opportunities)</th><td>Sign pilot universities in the top-growth destinations and put our checklist link into their admission letters.</td></tr>
-              <tr><th scope="row">WO (fix weaknesses through opportunities)</th><td>Use university licence income to fund country verifiers and extend from 8 to 27 full guides.</td></tr>
-              <tr><th scope="row">ST (use strengths against threats)</th><td>Compete with AI on accountability: dates, sources and a public change log that a chatbot cannot give.</td></tr>
-              <tr><th scope="row">WT (limit weaknesses and threats)</th><td>Stay narrow (8 countries × 18 passports) and deep, rather than shallow everywhere; buy professional indemnity insurance before charging users.</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <!-- 8 BMC -->
-      <section id="bc-model" aria-labelledby="bc-model-h">
-        <span class="label-num">Section 8 · Session 6 · Business model with sustainability in mind</span>
-        <h2 id="bc-model-h">Business Model Canvas</h2>
-        <p>Following Osterwalder and Pigneur <span class="cite">(2010)</span>. The model is B2B2C: students use it free; universities pay.</p>
-        <div class="bmc">
-          <div style="grid-area:kp"><h4>Key partners</h4><ul><li>Universities' international offices</li><li>Immigration lawyers (premium reviews)</li><li>Student associations and ambassadors</li><li>Regulated providers (blocked accounts, insurance), disclosed</li></ul></div>
-          <div style="grid-area:ka"><h4>Key activities</h4><ul><li>Monitor gazettes and ministry pages</li><li>Verify and publish rules</li><li>Product development</li><li>University sales</li></ul></div>
-          <div style="grid-area:kr"><h4>Key resources</h4><ul><li>Verified rulebook</li><li>Verification team and routine</li><li>Rules engine</li><li>Brand trust</li></ul></div>
-          <div class="vp" style="grid-area:vp"><h4>Value propositions</h4><ul><li>Students: the exact steps, costs and deadlines for your passport and destination, dated and sourced</li><li>Universities: fewer admitted students lost to visa problems; fewer repetitive visa questions</li></ul></div>
-          <div style="grid-area:cr"><h4>Customer relationships</h4><ul><li>Self-service</li><li>Change alerts</li><li>Human document check (premium)</li></ul></div>
-          <div style="grid-area:ch"><h4>Channels</h4><ul><li>Links in admission letters and university portals</li><li>Search pages per passport–destination pair</li><li>Student ambassadors, education fairs</li></ul></div>
-          <div style="grid-area:cs"><h4>Customer segments</h4><ul><li>Non-EU degree students (users)</li><li>University international offices (payers)</li><li>Travellers and families (users)</li></ul></div>
-          <div style="grid-area:cost"><h4>Cost structure</h4><ul><li>People: verifiers, developer (≈ 70–80% of costs)</li><li>Legal review and professional indemnity insurance</li><li>Marketing and university sales; low hosting costs</li></ul></div>
-          <div style="grid-area:rev"><h4>Revenue streams</h4><ul><li>University licence: €4,000–€12,000 a year</li><li>Document check: €39 per student</li><li>Disclosed referral fees from regulated providers (never pay-for-ranking)</li></ul></div>
-        </div>
-      </section>
-
-      <!-- 9 4Ps -->
-      <section id="bc-mix" aria-labelledby="bc-mix-h">
-        <span class="label-num">Section 9 · Session 7 · Marketing mix</span>
-        <h2 id="bc-mix-h">Marketing mix (4Ps)</h2>
-        <div class="two">
-          <div class="card"><h4>Product</h4><ul><li>Free core checker: passport × destination × purpose</li><li>Cost panel, comparison, change log</li><li>Premium Document Check (€39): a trained reviewer checks your pack against the current checklist within 48 hours. Not legal advice and no approval promise.</li><li>University dashboard and embeddable widget</li></ul></div>
-          <div class="card"><h4>Price</h4><ul><li>Students: free, for access (SDG 10) and fast adoption</li><li>Document Check €39: below the €90 Schengen visa fee, and small next to losing a visa fee and a semester</li><li>Universities: value-based tiers (€4k / €7k / €12k a year by number of non-EU admits). One student who misses the start can cost an institution five-figure tuition in Ireland or the Netherlands.</li></ul></div>
-          <div class="card"><h4>Place</h4><ul><li>Mobile-first web app, no install</li><li>Inside university admission emails and applicant portals</li><li>Search pages for each passport–destination pair</li><li>Email or WhatsApp change alerts (roadmap)</li></ul></div>
-          <div class="card"><h4>Promotion</h4><ul><li>A monthly "What changed" post; the change log doubles as content</li><li>Paid student ambassadors from each origin market</li><li>Co-branding with universities; education fairs</li><li>Trust signals over hype: sources, dates, no paid rankings</li></ul></div>
-        </div>
-      </section>
-
-      <!-- 10 GROWTH -->
-      <section id="bc-growth" aria-labelledby="bc-growth-h">
-        <span class="label-num">Section 10 · Session 6 · Portfolio and growth</span>
-        <h2 id="bc-growth-h">Growth strategy (Ansoff)</h2>
-        <p>Growth options <span class="cite">(Ansoff, 1957)</span>, from lowest to highest risk. Selected moves are outlined.</p>
-        <div class="ansoff">
-          <span></span><span class="ax">Existing products</span><span class="ax">New products</span>
-          <span class="ax">Existing markets</span>
-          <div class="cell pick"><b>Market penetration · Year 1</b><span>18 passports × 8 destinations: sign pilot universities, grow organic search.</span></div>
-          <div class="cell pick"><b>Product development · Year 1–2</b><span>Document Check, change alerts, Hindi, Mandarin and Arabic versions.</span></div>
-          <span class="ax">New markets</span>
-          <div class="cell pick"><b>Market development · Year 2–3</b><span>All 27 destinations in depth; new origin markets (Bangladesh, Nepal, Egypt, Ghana, Kenya).</span></div>
-          <div class="cell"><b>Diversification · later</b><span>Rules API for employers' HR mobility teams. Highest risk; not before Year 3.</span></div>
-        </div>
-        <p class="small muted">We did not use the BCG matrix: it needs a portfolio of products with measured market share and growth, which a single pre-launch product does not have. Once the three revenue lines exist, the university licence would likely start as a "question mark" (high-growth market, low share).</p>
-      </section>
-
-      <!-- 11 FINANCE -->
-      <section id="bc-finance" aria-labelledby="bc-finance-h">
-        <span class="label-num">Section 11 · Sessions 8–9 · Costs, finance, revenue</span>
-        <h2 id="bc-finance-h">Costs, revenue and financing</h2>
-        <p>All figures are <strong>our assumptions</strong> for a three-year plan, to be tested with pilot customers. Market data: 549,400 first education permits a year <span class="cite">(Eurostat, 2025b)</span>.</p>
-        <figure class="chart" id="fin-chart" style="margin:0">
-          <figcaption style="display:grid;gap:4px;margin-bottom:6px"><h3>Projected revenue and operating costs</h3><span class="small muted">Euros per year, assumptions below.</span></figcaption>
-          <div class="legend"><span><i style="background:var(--viz-1)"></i>Revenue</span><span><i style="background:var(--viz-2)"></i>Operating costs</span></div>
-          <div class="svg-host"></div>
-        </figure>
-        <div class="table-wrap">
-          <table class="grid">
-            <thead><tr><th scope="col">Assumption</th><th scope="col">Year 1</th><th scope="col">Year 2</th><th scope="col">Year 3</th></tr></thead>
-            <tbody>
-              <tr><th scope="row">Paying universities × average licence</th><td class="num">5 × €4,000</td><td class="num">18 × €6,000</td><td class="num">40 × €7,000</td></tr>
-              <tr><th scope="row">Document checks × €39</th><td class="num">600</td><td class="num">2,500</td><td class="num">5,000</td></tr>
-              <tr><th scope="row">Disclosed referral income</th><td class="num">€6,000</td><td class="num">€20,000</td><td class="num">€40,000</td></tr>
-              <tr><th scope="row"><strong>Revenue</strong></th><td class="num"><strong>€49,400</strong></td><td class="num"><strong>€225,500</strong></td><td class="num"><strong>€515,000</strong></td></tr>
-              <tr><th scope="row">People (verifiers, developer; FTE)</th><td class="num">€56,000 (≈1.4)</td><td class="num">€150,000 (3)</td><td class="num">€255,000 (5)</td></tr>
-              <tr><th scope="row">Legal review, indemnity insurance, GDPR</th><td class="num">€8,000</td><td class="num">€12,000</td><td class="num">€20,000</td></tr>
-              <tr><th scope="row">Marketing and university sales</th><td class="num">€10,000</td><td class="num">€22,000</td><td class="num">€50,000</td></tr>
-              <tr><th scope="row">Hosting, tools, contingency</th><td class="num">€4,000</td><td class="num">€6,000</td><td class="num">€15,000</td></tr>
-              <tr><th scope="row"><strong>Operating costs</strong></th><td class="num"><strong>€78,000</strong></td><td class="num"><strong>€190,000</strong></td><td class="num"><strong>€340,000</strong></td></tr>
-              <tr><th scope="row"><strong>Operating result</strong></th><td class="num">−€28,600</td><td class="num">+€35,500</td><td class="num">+€175,000</td></tr>
-            </tbody>
-          </table>
-        </div>
-        <div class="two">
-          <div class="card"><h4>Break-even and sensitivity</h4><ul><li>Break-even during Year 2 under these assumptions.</li><li>The biggest uncertainty is universities' willingness to pay. With half the Year 2 university revenue (€54,000 instead of €108,000), Year 2 shows a loss of about €18,500 and break-even slips to Year 3.</li><li>Year 3 document checks equal about 0.9% of one year's new education permits, a deliberately modest share.</li></ul></div>
-          <div class="card"><h4>Financing the Year 1 gap (≈ €30,000)</h4><ul><li>Founders' time and bootstrapping (the prototype cost nothing but our time)</li><li>Incubation, e.g. ESCP Blue Factory: coaching, network, sometimes seed support</li><li>Public start-up grants, e.g. Bpifrance's Bourse French Tech (amount and eligibility to confirm)</li><li>Pilot universities paying upfront (customer financing)</li><li>Business angels only once the pilots show retention</li></ul></div>
-        </div>
-      </section>
-
-      <!-- 12 ORG -->
-      <section id="bc-org" aria-labelledby="bc-org-h">
-        <span class="label-num">Section 12 · Sessions 9–10 · Structure and human capital</span>
-        <h2 id="bc-org-h">Organisation and people</h2>
-        <div class="two">
-          <div class="card"><h4>Structure</h4><p><strong>Launch: simple functional structure.</strong> CEO (partnerships and sales), Head of Rulebook (verification and legal partners), Product and Tech, Growth (content and ambassadors).</p><p><strong>At scale: matrix.</strong> Destination owners (one per country, accountable for accuracy) crossed with origin-market leads (one per passport market, accountable for users). This matches the product's two dimensions: passport × destination.</p></div>
-          <div class="card"><h4>Verification workflow</h4><ol><li>Monitor: official gazettes and ministry pages, weekly; alerts from university partners and users.</li><li>Draft: the destination owner updates the rule with source and date.</li><li>Check: a second person verifies against the official source (maker-checker).</li><li>Publish: the change goes live with an entry in the public change log.</li></ol></div>
-          <div class="card"><h4>Human capital</h4><ul><li>Hire multilingual verifiers with lived visa experience from our origin markets.</li><li>Pay student ambassadors; no unpaid internships.</li><li>Measure accuracy, not volume: error rate and days-to-update as key indicators.</li><li>Blame-free error reporting, so mistakes surface fast.</li></ul></div>
-          <div class="card"><h4>Managing the change from project to company</h4><p>Lewin's unfreeze–change–refreeze: unfreeze by agreeing with pilot users what "accurate enough" means; change by formalising the maker-checker routine; refreeze by writing it into roles, onboarding and indicators before hiring beyond five people.</p></div>
-        </div>
-      </section>
-
-      <!-- 13 INNOVATION -->
-      <section id="bc-innovation" aria-labelledby="bc-innovation-h">
-        <span class="label-num">Section 13 · Session 8 · Innovation</span>
-        <h2 id="bc-innovation-h">Innovation</h2>
-        <ul>
-          <li><strong>Type:</strong> service and business-model innovation. The rules are public; the novelty is structuring them by passport × destination × purpose, dating every rule, and having universities pay rather than students <span class="cite">(Whittington et al., 2023)</span>.</li>
-          <li><strong>Degree:</strong> incremental for users (a better checklist) but architectural for the market (it joins pieces no one else joins).</li>
-          <li><strong>Open innovation:</strong> users and universities report changes; each report enters the maker-checker workflow before it goes live.</li>
-          <li><strong>Deliberately not now:</strong> a free-text AI chatbot. Hallucinated visa rules would destroy trust; any assistant must answer only from the verified rulebook and disclose that it is AI.</li>
-        </ul>
-      </section>
-
-      <!-- 14 EXPANSION -->
-      <section id="bc-expansion" aria-labelledby="bc-expansion-h">
-        <span class="label-num">Section 14 · Session 11 · Global market expansion</span>
-        <h2 id="bc-expansion-h">International expansion</h2>
-        <p>The product is international by nature: users are abroad, destinations are in the EU. We assess origin markets with CAGE distance <span class="cite">(Ghemawat, 2001)</span>.</p>
-        <div class="table-wrap">
-          <table class="grid">
-            <thead><tr><th scope="col">Market</th><th scope="col">Cultural</th><th scope="col">Administrative</th><th scope="col">Geographic</th><th scope="col">Economic</th><th scope="col">Entry mode</th></tr></thead>
-            <tbody>
-              <tr><th scope="row">India</th><td>English widely used; agents and family central to decisions</td><td>Digital Personal Data Protection Act 2023</td><td>Low for a digital product</td><td>Price-sensitive; UPI payments</td><td>Digital, via university partners and ambassadors</td></tr>
-              <tr><th scope="row">China</th><td>Mandarin content needed; WeChat is the main channel</td><td>PIPL (2021); many Western services blocked</td><td>Hosting and access need planning</td><td>Alipay and WeChat Pay</td><td>Local partner for hosting and channels</td></tr>
-              <tr><th scope="row">Nigeria</th><td>English; high refusal anxiety</td><td>Nigeria Data Protection Act 2023</td><td>Low</td><td>Low willingness to pay: B2B-funded free access matters most</td><td>Digital plus university partners</td></tr>
-              <tr><th scope="row">Gulf states</th><td>Arabic content; sponsored students are common</td><td>Saudi PDPL; visa rules vary by GCC state</td><td>Low</td><td>High willingness to pay; government scholarship bodies as buyers</td><td>Partnerships with scholarship bodies</td></tr>
-            </tbody>
-          </table>
-        </div>
-        <p>Sequence: India and China first (largest volumes), then Nigeria, Pakistan and Vietnam (high need), then the Gulf states via scholarship bodies. We expand through digital export and partnerships, not subsidiaries, until Year 3.</p>
-      </section>
-
-      <!-- 15 ETHICS -->
-      <section id="bc-ethics" aria-labelledby="bc-ethics-h">
-        <span class="label-num">Section 15 · Session 1 · Sustainable impact and ethics</span>
-        <h2 id="bc-ethics-h">Sustainability and ethics</h2>
-        <p>ClearEntry contributes to four UN Sustainable Development Goals <span class="cite">(United Nations, 2015)</span>.</p>
-        <div class="sdg">
-          <div><b>4</b><strong>Quality education</strong><span>Fewer students lose a place at university because of avoidable visa mistakes.</span></div>
-          <div><b>10</b><strong>Reduced inequalities</strong><span>Target 10.7: orderly, safe, regular migration. Free, accurate information matters most to applicants who can't pay agents.</span></div>
-          <div><b>16</b><strong>Institutions</strong><span>Target 16.10: public access to information, in plain language and linked to the official source.</span></div>
-          <div><b>17</b><strong>Partnerships</strong><span>Universities, student associations and public bodies working from one rulebook.</span></div>
-        </div>
-        <div class="table-wrap">
-          <table class="grid">
-            <thead><tr><th scope="col">Ethical dilemma</th><th scope="col">Our decision</th></tr></thead>
-            <tbody>
-              <tr><th scope="row">Referral income vs neutrality</th><td>Only regulated providers, always disclosed, and they never change the order or content of the checklist.</td></tr>
-              <tr><th scope="row">A paid tier creates two-tier access</th><td>Everything needed to apply correctly stays free. The paid check is optional reassurance.</td></tr>
-              <tr><th scope="row">Sensitive personal data (nationality, passport)</th><td>No account needed; choices stay in the user's browser (GDPR data minimisation).</td></tr>
-              <tr><th scope="row">AI answers that sound right but are wrong</th><td>No unsourced generated answers; any AI feature is grounded and labelled.</td></tr>
-              <tr><th scope="row">Promising outcomes we don't control</th><td>We never promise approval, and we explain that some refusals are structural, not informational.</td></tr>
-              <tr><th scope="row">Appointment bots and resale</th><td>We never sell, reserve or resell consular appointments.</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <!-- 16 LIMITS -->
-      <section id="bc-limits" aria-labelledby="bc-limits-h">
-        <span class="label-num">Section 16 · Critical thinking</span>
-        <h2 id="bc-limits-h">Limits of our analysis</h2>
-        <ul>
-          <li><strong>PESTEL is a snapshot.</strong> Factors overlap (France's funds rule is political, economic and legal at once) and our 0–10 scores are group judgements, not measurements.</li>
-          <li><strong>Five Forces assumes a clear industry.</strong> Ours mixes public services and private firms, and governments act as supplier, rival and complementor at once. The model does not capture that.</li>
-          <li><strong>Survey data has biases.</strong> The Navitas survey reports agents' views; QS surveys use self-selected respondents. Neither is a random sample of students.</li>
-          <li><strong>Refusal statistics cover short-stay visas only.</strong> There is no EU-wide dataset on student visa refusals, so we cannot measure the student problem directly yet.</li>
-          <li><strong>Rule verification.</strong> We checked every figure on 24 September 2026, but some official sites were not directly accessible from our research tools, so several figures rely on two or more secondary sources. The checker marks these instead of hiding the uncertainty.</li>
-          <li><strong>Financials are untested assumptions.</strong> No university has yet agreed to pay; the sensitivity analysis shows how much depends on this.</li>
-        </ul>
-      </section>
-
-      <!-- 17 NEXT -->
-      <section id="bc-next" aria-labelledby="bc-next-h">
-        <span class="label-num">Section 17 · Testing the idea</span>
-        <h2 id="bc-next-h">Next steps: how we would test it</h2>
-        <div class="table-wrap">
-          <table class="grid">
-            <thead><tr><th scope="col">Test</th><th scope="col">Method</th><th scope="col">Success looks like</th></tr></thead>
-            <tbody>
-              <tr><th scope="row">Do students trust it?</th><td>20 interviews (5 each from India, China, Nigeria, Gulf) using the prototype</td><td>≥ 15 of 20 say they would use it instead of an agent for the visa step</td></tr>
-              <tr><th scope="row">Can they use it?</th><td>Task test: "Find how much money you must show for Germany"</td><td>≥ 90% find it in under 30 seconds</td></tr>
-              <tr><th scope="row">Will universities pay?</th><td>5 interviews with international offices, then a pilot offer</td><td>2 signed paid pilots</td></tr>
-              <tr><th scope="row">Can we keep it accurate?</th><td>Run the maker-checker routine for 3 months</td><td>Every official change live within 7 days</td></tr>
-            </tbody>
-          </table>
-        </div>
-        <p class="small muted">Full references are listed under <a href="#src-refs">Sources &amp; AI use</a>.</p>
-      </section>
-    </div>
-  </div>
-</div>
-
-<!-- =============================================================== -->
-<!-- VIEW 3: SOURCES & AI USE                                         -->
+<!-- VIEW 2: SOURCES & AI USE                                         -->
 <!-- =============================================================== -->
 <div id="sources" data-view hidden>
   <div class="wrap report">
     <nav class="toc" aria-label="Sources contents">
       <span class="eyebrow">Sources &amp; AI use</span>
       <a href="#src-method">How we built the rulebook</a>
+      <a href="#src-fixes">What verification changed</a>
       <a href="#src-refs">References (APA 7)</a>
+      <a href="#src-emb">Embassies and ministries</a>
       <a href="#src-ai">AI use statement</a>
       <a href="#src-legal">Disclaimer</a>
     </nav>
@@ -663,20 +228,46 @@
         <p class="eyebrow">Method</p>
         <h1 id="src-method-h">How we built the rulebook</h1>
         <ol>
-          <li><strong>Scope.</strong> 18 passports (India, China, the US, Canada, the six Gulf states, and eight other large or high-need markets) × 27 EU destinations. Eight destinations (France, Germany, the Netherlands, Spain, Italy, Ireland, Poland, Sweden) have full guides; the other 19 have basic guides. Schengen short-stay rules apply to all.</li>
-          <li><strong>Source hierarchy.</strong> Official legal text or authority page first; then the university or national agency; then reputable secondary sources, used only where two agree.</li>
-          <li><strong>Confidence labels.</strong> Every figure in the checker carries one: <span class="conf official">Official source</span> <span class="conf multi">2+ sources</span> <span class="conf check">Verify</span>. "Verify" means we found one source only, or sources disagree (for example, Spain's post-study permit is given as 12 months by some sources and 24 by others).</li>
-          <li><strong>Date.</strong> All rules were checked on <strong data-verified>24 Sep 2026</strong>. Each dated change goes into the <a href="#changes">change log</a>.</li>
-          <li><strong>Known gap.</strong> Some official sites could not be opened directly from our research tools, so we confirmed those figures through search results and secondary sources that cite the official rule. Before publishing to real users, each "Verify" item needs a manual check on the official site.</li>
+          <li><strong>Scope.</strong> <span data-count-origins>43</span> passports × 27 EU destinations. Eight destinations (France, Germany, the Netherlands, Spain, Italy, Ireland, Poland, Sweden) have full guides; the other 19 have basic guides linked to each country's official study-permit page. Schengen short-stay rules apply to all.</li>
+          <li><strong>Source hierarchy.</strong> EU law and the responsible authority's own page first; then the destination's embassy or consulate in the applicant's country; then universities and national study agencies. Secondary sources (news, law firms) appear only where an official source agrees.</li>
+          <li><strong>Both sides of the trip.</strong> For each passport we searched each destination's foreign-service website (diplo.de, esteri.it, exteriores.gob.es, gov.pl, ireland.ie, swedenabroad.se, netherlandsandyou.nl, France-Visas) and list <span data-count-emb>150</span> embassy and consulate pages. Where we found no country-specific page, the checker shows the destination's worldwide portal instead. We also list the foreign ministry of every passport country and, for US, UK, Canadian and Australian passports, their government's travel advice for each destination.</li>
+          <li><strong>Numbered citations.</strong> Every fact in a result carries a number in square brackets. The numbers are listed under <em>Sources</em> at the bottom of that result, together with the embassy and government links for the chosen countries.</li>
+          <li><strong>Confidence labels.</strong> Key figures carry one: <span class="conf official">Official source</span> <span class="conf multi">2+ sources</span> <span class="conf check">Verify</span>. "Verify" means we found one source only, or sources disagree.</li>
+          <li><strong>Date.</strong> Everything was checked on <strong data-verified>24 Sep 2026</strong>. Dated changes go into the <a href="#changes">change log</a>.</li>
+          <li><strong>Limitation.</strong> Our research tool could not open government websites directly (its network blocked them). We therefore checked each fact through web searches restricted to official government and EU domains, reading the official pages' text as the search engine returned it. Where that did not confirm an exact figure, the fact is labelled "Verify". Open the linked official page before you rely on any figure.</li>
         </ol>
+      </section>
+
+      <section id="src-fixes" aria-labelledby="src-fixes-h">
+        <p class="eyebrow">Corrections</p>
+        <h2 id="src-fixes-h">What verification changed</h2>
+        <p>Re-checking every fact against official pages corrected our first version in these places:</p>
+        <ul>
+          <li>France: validating the student VLS-TS now costs €150, not €50 (taxes raised on 1 May 2026).</li>
+          <li>Poland: the national visa fee is €200 since 1 January 2026, not €80.</li>
+          <li>Italy: the post-study job-search permit lasts 9–12 months, not a flat 12.</li>
+          <li>Sweden: the maintenance requirement is counted over 10 months a year, not 12.</li>
+          <li>Germany: Brazilian citizens can also enter visa-free and apply for a student permit in Germany.</li>
+          <li>Ireland: new courses no longer join the ILEP list; providers now need TrustEd Ireland authorisation.</li>
+          <li>Spain: the student visa fee varies by nationality, and the length of the post-study permit could not be confirmed, so it is marked "Verify".</li>
+          <li>Refusal rates: we removed figures that came only from secondary sources and kept the European Commission's 2025 statistics.</li>
+          <li>Tuition estimates were removed. Fees differ by institution and programme, so the checker shows only official government fees.</li>
+        </ul>
       </section>
 
       <section id="src-refs" aria-labelledby="src-refs-h">
         <p class="eyebrow">Reference list</p>
         <h2 id="src-refs-h">References (APA 7th edition)</h2>
         <p class="small muted" id="ref-counts"></p>
-        <p class="small">In-text citations on the business case page map to these entries. Where one organisation has several items in one year, we use a, b, c in order of appearance: European Commission (2026a) is the Visa Strategy, (2026b) the EES announcement, (2026c) the AI Act Article 50 FAQ and (2026d) the 2025 Schengen statistics; Eurostat (2025a) covers students from abroad and (2025b) residence permits; ICEF Monitor (2026a) is the agent survey, (2026b) the IDP research and (2026c) the US forecast. Abbreviations: MESR = Ministère de l'Enseignement supérieur et de la Recherche; IEA = International Energy Agency; QS = QS Quacquarelli Symonds.</p>
+        <p class="small">Sorted by author. "n.d." marks a page with no publication date; we checked all pages on 24 September 2026.</p>
         <ul class="refs" id="ref-list"></ul>
+      </section>
+
+      <section id="src-emb" aria-labelledby="src-emb-h">
+        <p class="eyebrow">Embassies and ministries</p>
+        <h2 id="src-emb-h">Embassy pages by passport country</h2>
+        <p>For each passport: the destination embassies and consulates we found on the destinations' own foreign-service websites, and the passport country's foreign ministry. Where a destination is missing, use its worldwide portal: <a href="https://france-visas.gouv.fr/en/" target="_blank" rel="noopener">France-Visas</a>, <a href="https://digital.diplo.de/navigator/en/visa" target="_blank" rel="noopener">Germany's Visa Navigator</a>, <a href="https://www.netherlandsworldwide.nl/visa-the-netherlands/mvv-long-stay" target="_blank" rel="noopener">NetherlandsWorldwide</a>, <a href="https://www.exteriores.gob.es/en/EmbajadasConsulados/Paginas/index.aspx" target="_blank" rel="noopener">Spain's embassy directory</a>, <a href="https://vistoperitalia.esteri.it/" target="_blank" rel="noopener">Visa for Italy</a>, <a href="https://www.irishimmigration.ie/visa-offices/" target="_blank" rel="noopener">Irish visa offices</a>, <a href="https://secure.e-konsulat.gov.pl" target="_blank" rel="noopener">e-Konsulat (Poland)</a>, <a href="https://www.swedenabroad.se/en/embassies/" target="_blank" rel="noopener">Sweden Abroad</a>.</p>
+        <div class="emb-list" id="emb-list"></div>
       </section>
 
       <section id="src-ai" aria-labelledby="src-ai-h">
@@ -684,19 +275,23 @@
         <h2 id="src-ai-h">AI use statement</h2>
         <p>The course allows AI if we cite it and explain how we used it, including the prompts. We used <strong>Claude (Anthropic), through Claude Code</strong>, on 24 September 2026, to:</p>
         <ul>
-          <li>search the web for 2026 visa rules and summarise them, with sources;</li>
+          <li>search official government, embassy and EU websites for the current visa and study-permit rules, and record a source for each fact;</li>
           <li>write the code for this website (HTML, CSS, JavaScript);</li>
-          <li>draft the Environmental and Legal rows and the "Revised" columns of our PESTEL, and first drafts of the other frameworks on the business case page.</li>
+          <li>draft the Environmental and Legal rows and the "Revised" columns of our PESTEL (kept in the project documents, not on this site).</li>
         </ul>
         <div class="callout crit">
           <h3>To complete before submission (group)</h3>
-          <p>Describe what the group checked, changed and decided yourselves, e.g. "We verified every 'Verify' item on the official site, rewrote sections X and Y, and chose the revenue model after discussing A and B."</p>
+          <p>Describe what the group checked, changed and decided yourselves, e.g. "We opened every 'Verify' item on the official site, corrected X, and checked the embassy links for our own passports."</p>
         </div>
         <details>
-          <summary><strong>Prompt entered</strong> (core request, verbatim)</summary>
+          <summary><strong>Prompt 1</strong> (first version, verbatim)</summary>
           <pre class="prompt">Im doing a group project in Business organisation, the goal is just to get the highest grade possible, i want you to build me a website, the idea is that Students and travellers in general have a hard time finding information or finding informatiom that´s not outdated, new laws and policies change a lot the time, I want this idea to be EU focused, The core concept is the following: An application on the website where you can select what country your from aka what passport you have and then from that select the country your going to study in/travel to, and then get all necessary information on that, basically collect all information, you can start with the following countries, India, china, USA, canada, middle eastern gulf states, and any other relevant country for the application, Now i also want you to follow these perimeters to optimize my grades, [course outline, assessment criteria and reference expectations pasted here]
 
 Pasted before the request as context: our draft PESTEL table ("PESTEL on your first workable problem") and our problem-statement table.</pre>
+        </details>
+        <details>
+          <summary><strong>Prompt 2</strong> (this version, verbatim)</summary>
+          <pre class="prompt">remove the whole business case side as it´s not going to be useful here, but instead add more sources, scrape embassy websites both the local country and the country your travelling to and make sure all info is correct, also have cited sources for each specific country when you select it on the bottom of the page, way more sources and add 25 more countries and make the and verify all information everywhere and also remove the estimation for tution fee</pre>
         </details>
       </section>
 
@@ -718,6 +313,7 @@ Pasted before the request as context: our draft PESTEL table ("PESTEL on your fi
 </footer>
 
 <script src="assets/data.js"></script>
+<script src="assets/embassies.js"></script>
 <script src="assets/app.js"></script>
 </body>
 </html>
