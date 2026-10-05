@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useState, useTransition } from 'react';
 import { CheckCircle2, Mail } from 'lucide-react';
+import { SignupSent } from '@/components/auth/signup-sent';
 import { Alert } from '@/components/ui/misc';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -88,13 +89,7 @@ export function SignupForm({ next, defaultEmail }: { next?: string; defaultEmail
     });
   }
 
-  if (done) {
-    return (
-      <Alert tone="ok" title="Confirm your e-mail">
-        We sent a confirmation link to <strong>{v.email}</strong>. Open it to finish creating your account.
-      </Alert>
-    );
-  }
+  if (done) return <SignupSent email={v.email} next={next} />;
   return (
     <form onSubmit={submit} className="grid gap-4" noValidate>
       {error && <Alert tone="danger">{error}</Alert>}

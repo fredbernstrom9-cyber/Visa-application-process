@@ -151,6 +151,17 @@
   }
   html {
     -webkit-text-size-adjust: 100%;
+    color-scheme: light;
+  }
+  /* Tells the browser to draw its own controls (dropdown lists, date pickers, scrollbars) in the dark theme too */
+  html.dark {
+    color-scheme: dark;
+  }
+  /* Native dropdown lists follow the theme instead of the browser's default white list with light text */
+  select option,
+  select optgroup {
+    background-color: var(--popover);
+    color: var(--popover-foreground);
   }
   body {
     @apply bg-background text-foreground antialiased;
