@@ -62,3 +62,18 @@ export function caseExportRow(c: CaseRow): Cell[] {
     c.submitted_at?.slice(0, 10) ?? null, c.decided_at?.slice(0, 10) ?? null, c.notes,
   ];
 }
+
+/** Multi-sheet XLSX workbook (used by "Export everything" on the dashboard). */
+export async function downloadWorkbook(filename: string, sheets: { sheet: string; headers: string[]; rows: Cell[][] }[]) {
+  const { default: writeExcelFile } = await import('write-excel-file/browser');
+  const book = sheets.map((s) => ({
+    sheet: s.sheet.slice(0, 31),
+    data: [
+      s.headers.map((h) => ({ value: h, fontWeight: 'bold' as const })),
+      ...s.rows.map((r) => r.map((c) => (c === null || c === undefined || c === '' ? null : typeof c === 'number' || typeof c === 'boolean' || c instanceof Date ? c : String(c)))),
+    ],
+  }));
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const blob = await (writeExcelFile as any)(book).toBlob();
+  downloadBlob(blob, `${filename}.xlsx`);
+}

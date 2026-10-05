@@ -75,7 +75,8 @@ grant update (default_processing_days, default_appointment_wait_days, default_do
               high_buffer_days, medium_buffer_days, processing_times_confirmed)
   on public.org_settings to authenticated;
 grant insert (org_id, destination, visa_type, processing_days, appointment_wait_days, doc_prep_days, source_note),
-      update (destination, visa_type, processing_days, appointment_wait_days, doc_prep_days, source_note),
+      -- org_id is updatable only so INSERT .. ON CONFLICT DO UPDATE (upsert) works; the lock_org_id trigger forbids changing it
+      update (org_id, destination, visa_type, processing_days, appointment_wait_days, doc_prep_days, source_note),
       delete on public.processing_times to authenticated;
 
 grant insert (org_id, full_name, email, phone, nationality, residence_country),
@@ -94,7 +95,7 @@ grant insert (org_id, name, destination, visa_type, nationality, official_source
       update (name, destination, visa_type, nationality, official_source_name, official_source_url,
               source_last_checked, notes, active),
       delete on public.checklist_templates to authenticated;
-grant insert (org_id, template_id, label, description, required, due_days_before_start, sort_order),
+grant insert (id, org_id, template_id, label, description, required, due_days_before_start, sort_order),
       update (label, description, required, due_days_before_start, sort_order),
       delete on public.checklist_template_items to authenticated;
 

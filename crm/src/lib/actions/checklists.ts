@@ -47,16 +47,25 @@ export async function saveTemplateAction(input: unknown): Promise<ActionResult<{
       if (error) return error.code === '23505' ? fail('A template for this destination, visa type and nationality already exists.', 'validation') : dbError(error);
       templateId = data.id as string;
     }
-    // Keep existing item ids stable so already-applied checklists keep their link to the template.
-    const keep = items.map((i) => i.id);
-    const del = supabase.from('checklist_template_items').delete().eq('template_id', templateId);
-    const { error: de } = keep.length ? await del.not('id', 'in', `(${keep.join(',')})`) : await del;
-    if (de) return dbError(de);
-    if (items.length) {
-      const rows = items.map((i, idx) => ({ ...i, template_id: templateId, org_id: org.id, sort_order: idx }));
-      const { error: ie } = await supabase.from('checklist_template_items').upsert(rows, { onConflict: 'id' });
-      if (ie) return dbError(ie);
+    // Keep existing item ids stable so already-applied checklists keep their link to the template:
+    // update the ones that exist, insert the new ones, delete the ones that were removed.
+    const { data: current, error: ce } = await supabase.from('checklist_template_items').select('id').eq('template_id', templateId);
+    if (ce) return dbError(ce);
+    const existing = new Set(((current ?? []) as { id: string }[]).map((r) => r.id));
+    const keep = new Set(items.map((i) => i.id));
+    const removed = [...existing].filter((x) => !keep.has(x));
+    if (removed.length) {
+      const { error } = await supabase.from('checklist_template_items').delete().in('id', removed);
+      if (error) return dbError(error);
     }
+    const results = await Promise.all(items.map((i, idx) => {
+      const { id: itemId, ...rest } = i;
+      return existing.has(itemId)
+        ? supabase.from('checklist_template_items').update({ ...rest, sort_order: idx }).eq('id', itemId)
+        : supabase.from('checklist_template_items').insert({ ...rest, id: itemId, template_id: templateId, org_id: org.id, sort_order: idx });
+    }));
+    const failed = results.find((r) => r.error);
+    if (failed?.error) return dbError(failed.error);
     return ok({ id: templateId! });
   });
 }

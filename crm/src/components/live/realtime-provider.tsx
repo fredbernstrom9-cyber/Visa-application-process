@@ -124,6 +124,7 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
       if (payload.eventType === 'DELETE' || !row) return;
       const actor = (payload.eventType === 'INSERT' ? (row.created_by ?? row.uploaded_by) : (row.updated_by ?? null)) as string | null | undefined;
       // Rows changed by teammates, the applicant portal or the system flash briefly.
+      if (table === 'activity_events' && payload.eventType === 'INSERT' && row.actor_id !== user.id) markChanged([row.id as string]);
       if (actor !== user.id && (table === 'cases' || table === 'checklist_items' || table === 'tasks' || table === 'checklist_item_files')) {
         markChanged([row.id as string, (row.case_id as string | undefined) ?? undefined]);
         if (table === 'cases') markChanged([row.applicant_id as string]);

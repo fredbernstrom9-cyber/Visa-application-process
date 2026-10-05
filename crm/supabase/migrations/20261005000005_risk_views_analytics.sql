@@ -350,7 +350,7 @@ begin
     select h.stage, h.entered_at, h.exited_at
       from public.case_stage_history h join ids on ids.id = h.case_id
   )
-  select s.stage, s.ord,
+  select s.stage::text, s.ord,
          count(h.stage) filter (where h.exited_at is not null),
          round((avg(extract(epoch from h.exited_at - h.entered_at) / 86400.0) filter (where h.exited_at is not null))::numeric, 1),
          round((percentile_cont(0.5) within group (order by extract(epoch from h.exited_at - h.entered_at) / 86400.0)

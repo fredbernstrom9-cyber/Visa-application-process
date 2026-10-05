@@ -19,7 +19,11 @@
     "db:local": "bash scripts/pg-local.sh start",
     "db:local:stop": "bash scripts/pg-local.sh stop",
     "db:types": "supabase gen types typescript --local > src/lib/database.generated.ts",
-    "check": "npm run typecheck && npm run lint && npm run test"
+    "check": "npm run typecheck && npm run lint && npm run test",
+    "stack:start": "bash scripts/dev-stack/stack.sh start",
+    "stack:reset": "bash scripts/dev-stack/stack.sh start --reset",
+    "stack:stop": "bash scripts/dev-stack/stack.sh stop",
+    "stack:env": "bash scripts/dev-stack/stack.sh env"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
