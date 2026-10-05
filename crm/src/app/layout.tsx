@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next';
+import { AppSpeedInsights } from '@/components/app-speed-insights';
 import { Providers } from '@/components/providers';
 import { APP_NAME } from '@/lib/env';
 import './globals.css';
@@ -20,6 +21,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" suppressHydrationWarning>
       <body>
         <Providers>{children}</Providers>
+        <AppSpeedInsights />
       </body>
     </html>
   );
