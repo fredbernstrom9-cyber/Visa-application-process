@@ -15,7 +15,7 @@ export default async function SignupPage({ searchParams }: { searchParams: Promi
       <SignupForm next={sp.next} defaultEmail={sp.email} />
       <p className="text-center text-sm text-muted-foreground">
         Already have an account?{' '}
-        <Link href={`/login${sp.next ? `?next=${encodeURIComponent(sp.next)}` : ''}`} className="font-medium text-primary hover:underline">Sign in</Link>
+        <Link href={`/login${sp.next ? `?next=${encodeURIComponent(sp.next)}` : ''}`} className="font-medium text-primary underline underline-offset-2 hover:no-underline">Sign in</Link>
       </p>
     </div>
   );

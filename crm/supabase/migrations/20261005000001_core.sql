@@ -141,6 +141,7 @@ create table public.organizations (
   stripe_subscription_id text,
   subscription_status text,
   current_period_end timestamptz,
+  billing_event_at timestamptz,        -- timestamp of the last Stripe event applied (ignores out-of-order deliveries)
   last_maintenance_at timestamptz,
   created_by uuid references auth.users (id) on delete set null,
   created_at timestamptz not null default now(),

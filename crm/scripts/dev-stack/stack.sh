@@ -60,6 +60,13 @@ SQL
 
 start() {
   bash scripts/pg-local.sh start >/dev/null
+  # The dev database is disposable: rebuild it automatically when migrations or the shim changed.
+  local sig; sig="$(cat tests/db/supabase-shim.sql supabase/migrations/*.sql | sha256sum | cut -d' ' -f1)"
+  if [ -f "$STACK_DIR/migrations.sha" ] && [ "$(cat "$STACK_DIR/migrations.sha")" != "$sig" ]; then
+    echo "Migrations changed: resetting the dev database."
+    set -- "--reset"
+  fi
+  echo "$sig" > "$STACK_DIR/migrations.sha"
   if [ "${1:-}" != "--reset" ] && healthy; then echo "Stack already running: http://127.0.0.1:${GATEWAY_PORT}"; return; fi
   if [ "${1:-}" = "--reset" ]; then
     stop_services

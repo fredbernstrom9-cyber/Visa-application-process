@@ -2,7 +2,7 @@
 
 import {
   DndContext, DragOverlay, KeyboardSensor, PointerSensor, TouchSensor, useDraggable, useDroppable, useSensor, useSensors,
-  type DragEndEvent, type DragStartEvent,
+  type DragEndEvent, type DragStartEvent, type KeyboardCoordinateGetter,
 } from '@dnd-kit/core';
 import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
 import { GripVertical, Lock, MoveRight, Plus, Search } from 'lucide-react';
@@ -33,6 +33,21 @@ import { getSupabaseBrowser } from '@/lib/supabase/client';
 import { toRpcFilters } from '@/lib/filters';
 import type { CaseRow } from '@/lib/types';
 import { cn } from '@/lib/utils';
+
+/** Keyboard dragging: left/right arrows jump to the neighbouring stage column. */
+const columnKeyboardCoordinates: KeyboardCoordinateGetter = (event, { context: { droppableRects, droppableContainers }, currentCoordinates }) => {
+  if (event.code !== 'ArrowRight' && event.code !== 'ArrowLeft') return undefined;
+  event.preventDefault();
+  const cols = droppableContainers.getEnabled()
+    .map((c) => ({ id: c.id, rect: droppableRects.get(c.id) }))
+    .filter((c): c is { id: typeof c.id; rect: NonNullable<typeof c.rect> } => Boolean(c.rect))
+    .sort((a, b) => a.rect.left - b.rect.left);
+  if (cols.length === 0) return undefined;
+  // currentCoordinates is the dragged card's top-left corner; columns are 280px wide, so the nearest left edge identifies the current column
+  const idx = cols.reduce((best, c, i) => (Math.abs(c.rect.left - currentCoordinates.x) < Math.abs(cols[best].rect.left - currentCoordinates.x) ? i : best), 0);
+  const next = cols[Math.max(0, Math.min(cols.length - 1, idx + (event.code === 'ArrowRight' ? 1 : -1)))];
+  return { x: next.rect.left + 8, y: next.rect.top + 80 }; // align the card with the column so it is unambiguously "over" it
+};
 
 const CLOSED: CaseStage[] = ['approved', 'refused', 'withdrawn'];
 const CLOSED_LIMIT = 40;
@@ -146,9 +161,9 @@ function Column({ stage, cases, total, canDrag, onMove }: { stage: (typeof STAGE
       aria-label={`${stage.label}: ${total} cases`}
       className={cn('flex w-72 shrink-0 snap-start flex-col rounded-xl border bg-muted/40 transition-colors sm:w-[17.5rem]', isOver && 'border-primary bg-accent/50')}
     >
-      <header className="flex items-center justify-between gap-2 border-b px-3 py-2.5">
+      <header className="flex items-start justify-between gap-2 border-b px-3 py-2.5">
         <div className="min-w-0">
-          <h2 className="truncate text-sm font-semibold">{stage.label}</h2>
+          <h2 className="text-sm font-semibold leading-tight">{stage.label}</h2>
           <p className="text-[11px] text-muted-foreground">{stage.hint}</p>
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
@@ -161,7 +176,7 @@ function Column({ stage, cases, total, canDrag, onMove }: { stage: (typeof STAGE
         {cases.length === 0 && <li className="rounded-lg border border-dashed p-4 text-center text-xs text-muted-foreground">Drop a case here</li>}
         {closed && total > cases.length && (
           <li className="px-1 pt-1 text-center text-xs text-muted-foreground">
-            Showing latest {cases.length} of {total}. <Link className="text-primary hover:underline" href={`/applicants?stage=${stage.key}`}>See all</Link>
+            Showing latest {cases.length} of {total}. <Link className="text-primary underline underline-offset-2 hover:no-underline" href={`/applicants?stage=${stage.key}`}>See all</Link>
           </li>
         )}
       </ul>
@@ -195,7 +210,7 @@ export function PipelineView() {
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 220, tolerance: 8 } }),
-    useSensor(KeyboardSensor),
+    useSensor(KeyboardSensor, { coordinateGetter: columnKeyboardCoordinates }),
   );
 
   const byStage = useMemo(() => {

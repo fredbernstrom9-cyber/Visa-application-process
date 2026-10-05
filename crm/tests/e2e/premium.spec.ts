@@ -71,9 +71,11 @@ test.describe('premium: import, analytics, exports', () => {
     await expect(kpi('Stage moves today')).toBeVisible();
 
     // every chart renders and has an accessible name
-    for (const name of [/Funnel:/, /Weekly submissions/, /Acceptance rate by destination/, /Acceptance rate by nationality/, /Average and median days per stage/, /open cases plotted/, /Cohort progress/]) {
+    for (const name of [/Funnel:/, /Weekly submissions/, /Acceptance rate by destination/, /Acceptance rate by nationality/, /open cases plotted/, /Cohort progress/]) {
       await expect(page.getByRole('img', { name }).first()).toBeVisible();
     }
+    // imported history has no stage-by-stage durations: the chart says so instead of drawing empty axes
+    await expect(page.getByText(/Stage durations appear once cases have moved/)).toBeVisible();
     await expect(page.getByText('Advisor workload & performance')).toBeVisible();
     await page.screenshot({ path: 'test-results/dashboard-desktop.png', fullPage: true });
 

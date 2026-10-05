@@ -41,7 +41,7 @@ export function EventRow({ e, showCase = true }: { e: ActivityRow; showCase?: bo
       <div className="min-w-0 flex-1 text-sm">
         <p className="leading-snug">
           <span className="font-medium">{actor}</span>{e.actor_type === 'applicant' && <span className="text-muted-foreground"> (portal)</span>} {d.before}{' '}
-          {d.withCase && showCase && e.case_id && <Link href={`/cases/${e.case_id}`} className="font-medium text-primary hover:underline">{e.applicant_name ?? 'a case'}</Link>}
+          {d.withCase && showCase && e.case_id && <Link href={`/cases/${e.case_id}`} className="font-medium text-primary underline underline-offset-2 hover:no-underline">{e.applicant_name ?? 'a case'}</Link>}
           {d.after && <span> {d.after}</span>}
         </p>
         <time dateTime={e.created_at} title={formatDateTime(e.created_at)} className="text-xs text-muted-foreground">{relativeTime(e.created_at)}</time>

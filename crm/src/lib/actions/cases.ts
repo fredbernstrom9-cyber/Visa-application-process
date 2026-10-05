@@ -127,23 +127,23 @@ export async function deleteApplicantsAction(input: { applicantIds: string[] }):
   const p = parse(z.object({ applicantIds: idList }), input);
   if ('error' in p) return p.error;
   return withOrg({ admin: true }, async ({ supabase }) => {
-    // Storage objects first (they are not covered by cascading deletes), then the rows.
-    const paths: string[] = [];
+    // Same path as a single erasure: stored files first (they are not covered by cascading deletes),
+    // then the rows and the scrubbing of audit metadata.
+    const admin = createSupabaseAdmin();
+    let deleted = 0;
     for (const id of p.data.applicantIds) {
-      const { data, error } = await supabase.rpc('erasure_file_paths', { p_applicant: id });
-      if (error) return dbError(error);
-      paths.push(...((data as string[] | null) ?? []));
-    }
-    if (paths.length) {
-      const admin = createSupabaseAdmin();
-      for (let i = 0; i < paths.length; i += 500) {
-        const { error } = await admin.storage.from('case-documents').remove(paths.slice(i, i + 500));
-        if (error) return fail('Could not remove stored documents; nothing was deleted. Please try again.', 'error');
+      const { data: paths, error: pe } = await supabase.rpc('erasure_file_paths', { p_applicant: id });
+      if (pe) return dbError(pe);
+      const list = (paths as string[] | null) ?? [];
+      for (let i = 0; i < list.length; i += 500) {
+        const { error } = await admin.storage.from('case-documents').remove(list.slice(i, i + 500));
+        if (error) return fail(`Could not remove stored documents; ${deleted} applicants were deleted before the problem. Please try again.`, 'error');
       }
+      const { error } = await supabase.rpc('erase_applicant', { p_applicant: id });
+      if (error) return dbError(error);
+      deleted++;
     }
-    const { data, error } = await supabase.from('applicants').delete().in('id', p.data.applicantIds).select('id');
-    if (error) return dbError(error);
-    return ok({ deleted: data?.length ?? 0 });
+    return ok({ deleted });
   });
 }
 

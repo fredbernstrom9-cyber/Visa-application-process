@@ -55,7 +55,7 @@ export function LoginForm({ next, defaultEmail }: { next?: string; defaultEmail?
         <Input id="email" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@organisation.com" />
       </Field>
       {mode === 'password' && (
-        <Field label={<span className="flex w-full items-center justify-between">Password <Link href="/forgot-password" className="text-xs font-normal text-primary hover:underline">Forgot?</Link></span>} htmlFor="password">
+        <Field label={<span className="flex w-full items-center justify-between">Password <Link href="/forgot-password" className="text-xs font-normal text-primary underline underline-offset-2 hover:no-underline">Forgot?</Link></span>} htmlFor="password">
           <Input id="password" type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
         </Field>
       )}
@@ -64,7 +64,7 @@ export function LoginForm({ next, defaultEmail }: { next?: string; defaultEmail?
       </Button>
       <button
         type="button"
-        className="text-center text-sm text-primary hover:underline"
+        className="text-center text-sm text-primary underline underline-offset-2 hover:no-underline"
         onClick={() => { setMode(mode === 'password' ? 'magic' : 'password'); setError(null); }}
       >
         {mode === 'password' ? 'Use a magic link instead' : 'Use a password instead'}

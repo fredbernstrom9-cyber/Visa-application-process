@@ -80,3 +80,24 @@ const TableHead = (p: React.ComponentProps<'th'>) => (
 const TableCell = (p: React.ComponentProps<'td'>) => <td {...p} className={cn('px-3 py-2.5 align-middle', p.className)} />;
 
 export { Skeleton, Separator, UserAvatar, Progress, Alert, Table, TableHeader, TableBody, TableRow, TableHead, TableCell };
+
+/** Toggle between a few views of the same content (not tabs: there is no separate panel per option). */
+function SegmentedControl<T extends string>({ value, onChange, options, label, className }: {
+  value: T; onChange: (v: T) => void; options: { value: T; label: React.ReactNode }[]; label: string; className?: string;
+}) {
+  return (
+    <div role="radiogroup" aria-label={label} className={cn('inline-flex w-fit max-w-full flex-wrap items-center gap-1 rounded-lg bg-muted p-[3px]', className)}>
+      {options.map((o) => (
+        <button
+          key={o.value} type="button" role="radio" aria-checked={value === o.value} onClick={() => onChange(o.value)}
+          className={cn('inline-flex h-7 items-center justify-center gap-1.5 whitespace-nowrap rounded-md px-3 text-xs font-medium transition-all focus-visible:ring-2 focus-visible:ring-ring/40',
+            value === o.value ? 'bg-card text-foreground shadow-xs' : 'text-muted-foreground hover:text-foreground')}
+        >
+          {o.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+export { SegmentedControl };

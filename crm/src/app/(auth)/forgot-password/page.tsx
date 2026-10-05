@@ -12,7 +12,7 @@ export default function ForgotPasswordPage() {
         <p className="text-sm text-muted-foreground">We&apos;ll e-mail you a link to choose a new one.</p>
       </div>
       <ForgotPasswordForm />
-      <p className="text-center text-sm"><Link href="/login" className="text-primary hover:underline">Back to sign in</Link></p>
+      <p className="text-center text-sm"><Link href="/login" className="text-primary underline underline-offset-2 hover:no-underline">Back to sign in</Link></p>
     </div>
   );
 }

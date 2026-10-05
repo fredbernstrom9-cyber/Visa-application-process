@@ -90,7 +90,7 @@ test.describe('free plan journey', () => {
     await page.goto('/tasks');
     await expect(page.getByText('Chase bank statement')).toBeVisible();
     await page.getByRole('checkbox', { name: /Mark “Chase bank statement” as done/ }).click();
-    await page.getByRole('tab', { name: 'Done' }).click();
+    await page.getByRole('radio', { name: 'Done' }).click();
     await expect(page.getByText('Chase bank statement')).toBeVisible();
 
     // 8. activity feed

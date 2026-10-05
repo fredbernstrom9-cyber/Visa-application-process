@@ -5,7 +5,7 @@ import { useMemo, useState } from 'react';
 import {
   Bar, BarChart, CartesianGrid, Cell, LabelList, Line, LineChart, ReferenceLine, ResponsiveContainer, Scatter, ScatterChart, Tooltip, XAxis, YAxis, ZAxis,
 } from 'recharts';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { SegmentedControl } from '@/components/ui/misc';
 import { countryName, flagEmoji } from '@/lib/countries';
 import { OPEN_STAGES, stageLabel } from '@/lib/domain';
 import type { CaseFilters } from '@/lib/filters';
@@ -298,9 +298,7 @@ export function CohortChart({ filters, drill }: { filters: CaseFilters; drill: D
       table={{ headers: ['Intake', 'Weeks before start', 'Cases in cohort', ...METRICS.map((m) => m.label)], rows: (data ?? []).map((r) => [r.intake, r.weeks_before, r.total, r.documents_plus, r.appointment_plus, r.submitted_plus, r.decided_plus]) }}
       actions={null}
     >
-      <Tabs value={metric} onValueChange={(v) => setMetric(v as typeof metric)}>
-        <TabsList className="h-auto flex-wrap">{METRICS.map((m) => <TabsTrigger key={m.key} value={m.key} className="text-xs">{m.label}</TabsTrigger>)}</TabsList>
-      </Tabs>
+      <SegmentedControl label="Cohort metric" value={metric} onChange={setMetric} options={METRICS.map((m) => ({ value: m.key, label: m.label }))} />
       <div role="img" aria-label={`Cohort progress: ${label}`} className="h-72 w-full">
         <ResponsiveContainer>
           <LineChart data={rows} margin={{ top: 8, right: 16, bottom: 16, left: -8 }}>

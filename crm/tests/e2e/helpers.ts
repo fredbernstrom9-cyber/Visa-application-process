@@ -16,6 +16,7 @@ export async function sql<T = Record<string, unknown>>(query: string, params: un
 }
 
 export async function signUp(page: Page, email: string, name = 'Test Person') {
+  await sql('delete from rate_limits'); // tests share one IP; the throttling itself is covered in auth.spec.ts
   await page.goto('/signup');
   await page.getByLabel('Your name').fill(name);
   await page.getByLabel('Work e-mail').fill(email);

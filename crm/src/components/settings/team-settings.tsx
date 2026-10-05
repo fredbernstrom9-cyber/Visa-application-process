@@ -75,7 +75,7 @@ export function TeamSettings() {
         <CardContent>
           {atLimit && isAdmin && (
             <Alert tone="info" className="mb-4" title="The Free plan includes one user">
-              Upgrade to Premium for unlimited seats. <Link href="/settings/billing" className="font-medium text-primary hover:underline">See plans</Link>
+              Upgrade to Premium for unlimited seats. <Link href="/settings/billing" className="font-medium text-primary underline underline-offset-2 hover:no-underline">See plans</Link>
             </Alert>
           )}
           {isLoading ? <Skeleton className="h-32" /> : (

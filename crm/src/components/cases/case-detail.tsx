@@ -79,7 +79,7 @@ function RiskExplainer({ c }: { c: CaseRow }) {
         {open && settings && (
           <p className="text-xs text-muted-foreground">
             High risk when slack is below {settings.high_buffer_days}d, medium below {settings.medium_buffer_days}d.{' '}
-            {isAdmin && <Link href="/settings/processing" className="text-primary hover:underline">Adjust processing times</Link>}
+            {isAdmin && <Link href="/settings/processing" className="text-primary underline underline-offset-2 hover:no-underline">Adjust processing times</Link>}
           </p>
         )}
       </CardContent>

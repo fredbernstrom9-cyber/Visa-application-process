@@ -10,8 +10,7 @@ import { EmptyState, PageHeader } from '@/components/app/page-header';
 import { useLive } from '@/components/live/realtime-provider';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Skeleton } from '@/components/ui/misc';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { SegmentedControl, Skeleton } from '@/components/ui/misc';
 import { updateTaskAction } from '@/lib/actions/tasks';
 import { bucketFor, BUCKETS } from '@/lib/deadlines';
 import { daysLabelFromToday, formatDate, todayIso } from '@/lib/format';
@@ -30,7 +29,7 @@ function Row({ t, caseName, onChange }: { t: Task; caseName: string; onChange: (
         onCheckedChange={(v) => start(async () => { const r = await updateTaskAction(t.id, { status: v === true ? 'done' : 'open' }); if (!r.ok) toast.error(r.error); else onChange(); })} />
       <div className="min-w-0 flex-1">
         <p className={cn('text-sm font-medium', t.status === 'done' && 'text-muted-foreground line-through')}>{t.title}</p>
-        <p className="text-xs text-muted-foreground"><Link href={`/cases/${t.case_id}`} className="text-primary hover:underline">{caseName}</Link></p>
+        <p className="text-xs text-muted-foreground"><Link href={`/cases/${t.case_id}`} className="text-primary underline underline-offset-2 hover:no-underline">{caseName}</Link></p>
       </div>
       {t.due_date && <span className={cn('shrink-0 text-xs', overdue ? 'font-medium text-danger' : 'text-muted-foreground')}>{formatDate(t.due_date)} · {daysLabelFromToday(t.due_date)}</span>}
     </li>
@@ -59,9 +58,10 @@ export function MyTasksView() {
   return (
     <>
       <PageHeader title="My tasks" description="Follow-ups assigned to you across all cases. Create tasks from a case’s Tasks tab." />
-      <Tabs value={tab} onValueChange={(v) => setTab(v as 'open' | 'done')}>
-        <TabsList><TabsTrigger value="open">Open <Badge tone={groups.overdue.length ? 'danger' : 'neutral'}>{openCount}</Badge></TabsTrigger><TabsTrigger value="done">Done</TabsTrigger></TabsList>
-      </Tabs>
+      <SegmentedControl label="Task status" value={tab} onChange={setTab} options={[
+        { value: 'open', label: <>Open <Badge tone={groups.overdue.length ? 'danger' : 'neutral'}>{openCount}</Badge></> },
+        { value: 'done', label: 'Done' },
+      ]} />
       <div className="mt-4">
         {isLoading ? <Skeleton className="h-48" /> : tab === 'done' ? (
           done.length === 0 ? <EmptyState icon={ListChecks} title="Nothing completed yet" /> :

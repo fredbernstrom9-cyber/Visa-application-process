@@ -41,7 +41,7 @@ function SourceNotice({ items, caseId }: { items: ChecklistItem[]; caseId: strin
           <div key={t.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border bg-card px-3 py-2 text-sm">
             <span className="font-medium">{t.name}</span>
             {t.official_source_url ? (
-              <a href={t.official_source_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-primary hover:underline">
+              <a href={t.official_source_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-primary underline underline-offset-2 hover:no-underline">
                 {t.official_source_name || 'Official source'} <ExternalLink className="size-3" />
               </a>
             ) : <span className="text-muted-foreground">{t.official_source_name || 'No official source recorded'}</span>}

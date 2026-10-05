@@ -18,7 +18,7 @@ export function PrivacySettings() {
         <CardContent className="grid gap-2 text-sm">
           <p><strong>Access / portability.</strong> Open the applicant’s case, then <em>More actions → Export their data (JSON)</em>. It contains their profile, cases, checklist, tasks, stage history and activity (file contents are not included; download those from the checklist).</p>
           <p><strong>Erasure.</strong> Owners and admins: open the case, then <em>More actions → Erase applicant</em>. This permanently deletes the person, all their cases, uploaded files, tasks, notes and activity. The audit log keeps only that an erasure took place, with no personal data.</p>
-          <p><strong>Bulk deletion.</strong> Select applicants in <Link href="/applicants" className="text-primary hover:underline">Applicants</Link> and choose Delete.</p>
+          <p><strong>Bulk deletion.</strong> Select applicants in <Link href="/applicants" className="text-primary underline underline-offset-2 hover:no-underline">Applicants</Link> and choose Delete.</p>
           <p className="text-muted-foreground">You are the data controller for your applicants; we act as your processor. Make sure you have a lawful basis, a data processing agreement and an applicant privacy notice before you upload their documents.</p>
         </CardContent>
       </Card>

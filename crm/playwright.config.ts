@@ -29,7 +29,7 @@ export default defineConfig({
     launchOptions: chromiumPath ? { executablePath: chromiumPath } : {},
   },
   projects: [
-    { name: 'desktop', use: { ...devices['Desktop Chrome'], viewport: { width: 1360, height: 860 } } },
+    { name: 'desktop', use: { ...devices['Desktop Chrome'], viewport: { width: 1360, height: 860 } }, grepInvert: /@phone/ },
     { name: 'phone', use: { ...devices['Pixel 7'] }, grep: /@phone/ },
   ],
   webServer: {
@@ -43,6 +43,9 @@ export default defineConfig({
       SUPABASE_SERVICE_ROLE_KEY: keys.service,
       NEXT_PUBLIC_APP_URL: `http://127.0.0.1:${APP_PORT}`,
       CRON_SECRET: 'e2e-cron-secret',
+      STRIPE_SECRET_KEY: 'sk_test_e2e_dummy',
+      STRIPE_PRICE_ID_PREMIUM: 'price_e2e',
+      STRIPE_WEBHOOK_SECRET: 'whsec_e2e_secret',
       EMAIL_PROVIDER: 'console',
     },
   },

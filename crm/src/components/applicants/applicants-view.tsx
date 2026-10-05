@@ -411,7 +411,7 @@ export function ApplicantsView() {
                 ))}
                 {!isLoading && rows.length === 0 && (
                   <TableRow><TableCell colSpan={table.getVisibleLeafColumns().length} className="py-12 text-center text-muted-foreground">
-                    No applicants match these filters. <button type="button" className="text-primary hover:underline" onClick={() => update({ filters: {}, q: '' })}>Clear filters</button>
+                    No applicants match these filters. <button type="button" className="text-primary underline underline-offset-2 hover:no-underline" onClick={() => update({ filters: {}, q: '' })}>Clear filters</button>
                   </TableCell></TableRow>
                 )}
               </TableBody>

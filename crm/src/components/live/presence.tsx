@@ -31,7 +31,7 @@ export function PresenceStack() {
             <li key={u.userId} className="flex items-center gap-2 text-sm">
               <span className="relative"><UserAvatar name={u.name} src={u.avatar} /><span className="absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full border-2 border-popover bg-ok" /></span>
               <span className="min-w-0 flex-1 truncate">{u.name}{u.userId === user.id && <span className="text-muted-foreground"> (you)</span>}</span>
-              {u.caseIds[0] && <Link href={`/cases/${u.caseIds[0]}`} className="text-xs text-primary hover:underline">viewing a case</Link>}
+              {u.caseIds[0] && <Link href={`/cases/${u.caseIds[0]}`} className="text-xs text-primary underline underline-offset-2 hover:no-underline">viewing a case</Link>}
             </li>
           ))}
         </ul>

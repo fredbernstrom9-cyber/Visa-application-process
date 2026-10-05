@@ -26,7 +26,6 @@ const pool = new pg.Pool({ connectionString: DB_URL, max: 8 });
 fs.mkdirSync(STORAGE_DIR, { recursive: true });
 
 // ---------------------------------------------------------------- JWT helpers
-const b64u = (b) => Buffer.from(b).toString('base64url');
 const sign = (payload) => signJwt(payload, JWT_SECRET);
 const verify = (token) => {
   const [h, b, s] = String(token || '').split('.');
@@ -284,7 +283,8 @@ async function handleStorage(req, res, url) {
       if (!t || t.kind !== 'read' || t.exp < Date.now() || t.bucket !== m[1] || t.name !== m[2]) return storageErr(res, 400, 'Invalid or expired token');
       const f = objPath(m[1], m[2]);
       if (!fs.existsSync(f)) return storageErr(res, 404, 'Object not found');
-      res.writeHead(200, { 'Content-Type': 'application/octet-stream', 'Content-Disposition': 'inline' });
+      const meta = (await pool.query(`select metadata from storage.objects where bucket_id = $1 and name = $2 limit 1`, [m[1], m[2]])).rows[0]?.metadata;
+      res.writeHead(200, { 'Content-Type': meta?.mimetype || 'application/octet-stream', 'Content-Disposition': 'inline' });
       return res.end(fs.readFileSync(f));
     }
     // create signed upload url (service role in practice)

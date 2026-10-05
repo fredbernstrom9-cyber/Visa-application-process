@@ -1,18 +1,17 @@
 'use server';
 
-import { createHash, randomBytes } from 'node:crypto';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { ACTIVE_ORG_COOKIE, getMemberships, getSessionUser } from '@/lib/auth/session';
 import { appUrl, APP_NAME } from '@/lib/env';
 import { inviteEmail, sendEmail } from '@/lib/email';
+import { hashToken, newToken } from '@/lib/tokens';
 import { allow, clientIp } from '@/lib/rate-limit';
 import { createSupabaseServer } from '@/lib/supabase/server';
 import { createSupabaseAdmin } from '@/lib/supabase/admin';
 import { dbError, fail, ok, parse, uuid, withOrg, type ActionResult } from './helpers';
 
-const hashToken = (t: string) => createHash('sha256').update(t).digest('hex');
 const setActiveOrg = async (id: string) => {
   const store = await cookies();
   store.set(ACTIVE_ORG_COOKIE, id, { httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production', path: '/', maxAge: 60 * 60 * 24 * 365 });
@@ -57,7 +56,7 @@ export async function inviteMemberAction(input: { email: string; role: 'admin' |
   if ('error' in p) return p.error;
   return withOrg({ admin: true }, async ({ supabase, org, user, role }) => {
     if (role === 'admin' && p.data.role === 'admin') return fail('Only owners can invite admins.', 'forbidden');
-    const token = randomBytes(32).toString('base64url');
+    const token = newToken();
     const { error } = await supabase.from('invitations').insert({
       org_id: org.id, email: p.data.email, role: p.data.role,
       can_view_all: p.data.role === 'advisor' && Boolean(p.data.canViewAll),
