@@ -1,0 +1,183 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --radius: 0.625rem;
+  --background: oklch(0.985 0.003 255);
+  --foreground: oklch(0.21 0.03 262);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.21 0.03 262);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.21 0.03 262);
+  --primary: oklch(0.46 0.17 264);
+  --primary-foreground: oklch(0.985 0.003 255);
+  --secondary: oklch(0.955 0.01 260);
+  --secondary-foreground: oklch(0.28 0.04 262);
+  --muted: oklch(0.955 0.008 260);
+  --muted-foreground: oklch(0.48 0.025 260);
+  --accent: oklch(0.945 0.02 264);
+  --accent-foreground: oklch(0.28 0.06 264);
+  --destructive: oklch(0.53 0.22 27);
+  --border: oklch(0.915 0.01 260);
+  --input: oklch(0.89 0.012 260);
+  --ring: oklch(0.58 0.15 264);
+  --sidebar: oklch(0.2 0.045 265);
+  --sidebar-foreground: oklch(0.92 0.01 260);
+  --sidebar-muted: oklch(0.7 0.03 262);
+  --sidebar-accent: oklch(0.29 0.06 265);
+  --sidebar-border: oklch(0.3 0.04 265);
+
+  /* status + risk: always paired with a text label and an icon in the UI */
+  --ok: oklch(0.5 0.13 155);
+  --ok-bg: oklch(0.95 0.045 155);
+  --warn: oklch(0.52 0.13 75);
+  --warn-bg: oklch(0.955 0.06 85);
+  --danger: oklch(0.52 0.2 27);
+  --danger-bg: oklch(0.955 0.035 25);
+  --info: oklch(0.48 0.15 255);
+  --info-bg: oklch(0.95 0.03 255);
+  --violet: oklch(0.48 0.17 300);
+  --violet-bg: oklch(0.955 0.03 300);
+  --neutral: oklch(0.45 0.02 260);
+  --neutral-bg: oklch(0.945 0.008 260);
+  --orange: oklch(0.54 0.15 50);
+  --orange-bg: oklch(0.955 0.04 60);
+
+  --chart-1: oklch(0.55 0.17 264);
+  --chart-2: oklch(0.62 0.14 175);
+  --chart-3: oklch(0.7 0.15 75);
+  --chart-4: oklch(0.6 0.2 25);
+  --chart-5: oklch(0.58 0.16 310);
+}
+
+.dark {
+  --background: oklch(0.17 0.025 262);
+  --foreground: oklch(0.95 0.008 260);
+  --card: oklch(0.215 0.03 262);
+  --card-foreground: oklch(0.95 0.008 260);
+  --popover: oklch(0.23 0.03 262);
+  --popover-foreground: oklch(0.95 0.008 260);
+  --primary: oklch(0.7 0.14 264);
+  --primary-foreground: oklch(0.17 0.03 262);
+  --secondary: oklch(0.27 0.03 262);
+  --secondary-foreground: oklch(0.95 0.008 260);
+  --muted: oklch(0.255 0.028 262);
+  --muted-foreground: oklch(0.72 0.02 260);
+  --accent: oklch(0.3 0.045 264);
+  --accent-foreground: oklch(0.95 0.008 260);
+  --destructive: oklch(0.7 0.19 25);
+  --border: oklch(0.31 0.03 262);
+  --input: oklch(0.34 0.03 262);
+  --ring: oklch(0.65 0.14 264);
+  --sidebar: oklch(0.14 0.03 264);
+  --sidebar-foreground: oklch(0.92 0.01 260);
+  --sidebar-muted: oklch(0.68 0.03 262);
+  --sidebar-accent: oklch(0.24 0.05 265);
+  --sidebar-border: oklch(0.25 0.035 265);
+
+  --ok: oklch(0.8 0.15 155);
+  --ok-bg: oklch(0.29 0.06 155);
+  --warn: oklch(0.84 0.14 85);
+  --warn-bg: oklch(0.31 0.06 80);
+  --danger: oklch(0.78 0.15 25);
+  --danger-bg: oklch(0.31 0.07 25);
+  --info: oklch(0.79 0.12 255);
+  --info-bg: oklch(0.29 0.06 255);
+  --violet: oklch(0.8 0.12 300);
+  --violet-bg: oklch(0.3 0.06 300);
+  --neutral: oklch(0.8 0.02 260);
+  --neutral-bg: oklch(0.29 0.02 260);
+  --orange: oklch(0.82 0.13 55);
+  --orange-bg: oklch(0.31 0.06 55);
+
+  --chart-1: oklch(0.72 0.14 264);
+  --chart-2: oklch(0.75 0.12 175);
+  --chart-3: oklch(0.8 0.14 80);
+  --chart-4: oklch(0.72 0.17 25);
+  --chart-5: oklch(0.74 0.14 310);
+}
+
+@theme inline {
+  --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-muted: var(--sidebar-muted);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-ok: var(--ok);
+  --color-ok-bg: var(--ok-bg);
+  --color-warn: var(--warn);
+  --color-warn-bg: var(--warn-bg);
+  --color-danger: var(--danger);
+  --color-danger-bg: var(--danger-bg);
+  --color-info: var(--info);
+  --color-info-bg: var(--info-bg);
+  --color-violet: var(--violet);
+  --color-violet-bg: var(--violet-bg);
+  --color-neutral: var(--neutral);
+  --color-neutral-bg: var(--neutral-bg);
+  --color-orange: var(--orange);
+  --color-orange-bg: var(--orange-bg);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: var(--font-sans);
+    font-feature-settings: 'cv11', 'ss01';
+  }
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-ring;
+  }
+  button,
+  [role='button'] {
+    cursor: pointer;
+  }
+}
+
+/* Row/card highlight when a teammate just changed it (live tracking) */
+@keyframes live-flash {
+  0% { background-color: color-mix(in oklch, var(--primary) 22%, transparent); box-shadow: 0 0 0 2px color-mix(in oklch, var(--primary) 55%, transparent); }
+  100% { background-color: transparent; box-shadow: 0 0 0 0 transparent; }
+}
+.live-flash {
+  animation: live-flash 3.2s ease-out 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .live-flash { animation: none; outline: 2px solid var(--primary); }
+}

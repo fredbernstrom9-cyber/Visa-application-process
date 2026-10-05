@@ -12,22 +12,74 @@ create trigger applicants_before_insert before insert on public.applicants
   for each row execute function private.applicants_before_insert();
 
 -- ---------------------------------------------------------------------------
--- Bulk import. Runs as the caller (RLS + plan limits apply). Each row is its own
--- subtransaction so one bad row never aborts the chunk. Applicants are matched
--- on e-mail within the organisation so re-imports do not duplicate people.
+-- Creating applicants + cases. One function owns the JSON -> row mapping so the
+-- single-record form and the bulk import behave identically. Runs as the caller
+-- (RLS + plan limits apply).
 -- ---------------------------------------------------------------------------
+create function private.insert_applicant_case(p_org uuid, r jsonb, p_reuse_by_email boolean)
+returns table (applicant_id uuid, case_id uuid, applicant_is_new boolean)
+language plpgsql as $$
+declare
+  v_app uuid;
+  v_email text := nullif(lower(btrim(coalesce(r ->> 'email', ''))), '');
+  v_new boolean := false;
+  v_case uuid;
+begin
+  if p_reuse_by_email and v_email is not null then
+    select a.id into v_app from public.applicants a
+     where a.org_id = p_org and lower(a.email) = v_email order by a.created_at limit 1;
+  end if;
+  if r ? 'applicant_id' and nullif(r ->> 'applicant_id', '') is not null then
+    v_app := (r ->> 'applicant_id')::uuid;
+  end if;
+  if v_app is null then
+    insert into public.applicants (org_id, full_name, email, phone, nationality, residence_country)
+    values (p_org, btrim(r ->> 'full_name'), v_email, nullif(btrim(coalesce(r ->> 'phone', '')), ''),
+            nullif(r ->> 'nationality', ''), nullif(r ->> 'residence_country', ''))
+    returning id into v_app;
+    v_new := true;
+  end if;
+  insert into public.cases (
+    org_id, applicant_id, destination, visa_type, purpose, programme, intake,
+    start_date, appointment_date, stage, assigned_to, tags, notes,
+    opened_on, submitted_at, decided_at
+  ) values (
+    p_org, v_app, r ->> 'destination',
+    coalesce(nullif(r ->> 'visa_type', '')::public.visa_type, 'C'),
+    nullif(r ->> 'purpose', ''), nullif(r ->> 'programme', ''), nullif(r ->> 'intake', ''),
+    nullif(r ->> 'start_date', '')::date, nullif(r ->> 'appointment_date', '')::date,
+    coalesce(nullif(r ->> 'stage', '')::public.case_stage, 'admitted'),
+    nullif(r ->> 'assigned_to', '')::uuid,
+    case when jsonb_typeof(r -> 'tags') = 'array'
+         then array(select jsonb_array_elements_text(r -> 'tags')) else '{}'::text[] end,
+    nullif(r ->> 'notes', ''),
+    coalesce(nullif(r ->> 'opened_on', '')::date, current_date),
+    nullif(r ->> 'submitted_at', '')::timestamptz, nullif(r ->> 'decided_at', '')::timestamptz
+  ) returning id into v_case;
+  return query select v_app, v_case, v_new;
+end $$;
+
+create function public.create_applicant_with_case(p_org uuid, p_row jsonb) returns jsonb
+language plpgsql as $$
+declare v record;
+begin
+  select * into v from private.insert_applicant_case(p_org, p_row, false);
+  return jsonb_build_object('applicant_id', v.applicant_id, 'case_id', v.case_id);
+end $$;
+
+-- Bulk import (Premium). Each row is its own subtransaction so one bad row never aborts the
+-- chunk; applicants are matched on e-mail within the organisation so re-imports do not
+-- duplicate people. Counters only move after a row fully succeeded.
 create function public.import_rows(p_org uuid, p_rows jsonb) returns jsonb
 language plpgsql as $$
 declare
   r jsonb;
-  v_app uuid;
-  v_email text;
+  v record;
   v_new_apps integer := 0;
   v_reused integer := 0;
   v_cases integer := 0;
   v_errors jsonb := '[]'::jsonb;
   v_limit boolean := false;
-  v_is_new boolean;
 begin
   perform private.assert_feature(p_org, 'import');
   if jsonb_typeof(p_rows) <> 'array' then raise exception 'invalid_rows'; end if;
@@ -36,47 +88,15 @@ begin
 
   for r in select * from jsonb_array_elements(p_rows) loop
     begin
-      v_email := nullif(lower(btrim(coalesce(r ->> 'email', ''))), '');
-      v_app := null;
-      v_is_new := false;
-      if v_email is not null then
-        select id into v_app from public.applicants
-         where org_id = p_org and lower(email) = v_email order by created_at limit 1;
-      end if;
-      if v_app is null then
-        insert into public.applicants (org_id, full_name, email, phone, nationality, residence_country)
-        values (p_org, btrim(r ->> 'full_name'), v_email, nullif(btrim(coalesce(r ->> 'phone', '')), ''),
-                nullif(r ->> 'nationality', ''), nullif(r ->> 'residence_country', ''))
-        returning id into v_app;
-        v_is_new := true;
-      end if;
-      insert into public.cases (
-        org_id, applicant_id, destination, visa_type, purpose, programme, intake,
-        start_date, appointment_date, stage, assigned_to, tags, notes,
-        opened_on, submitted_at, decided_at
-      ) values (
-        p_org, v_app, r ->> 'destination',
-        coalesce(nullif(r ->> 'visa_type', '')::public.visa_type, 'C'),
-        nullif(r ->> 'purpose', ''), nullif(r ->> 'programme', ''), nullif(r ->> 'intake', ''),
-        nullif(r ->> 'start_date', '')::date, nullif(r ->> 'appointment_date', '')::date,
-        coalesce(nullif(r ->> 'stage', '')::public.case_stage, 'admitted'),
-        nullif(r ->> 'assigned_to', '')::uuid,
-        case when jsonb_typeof(r -> 'tags') = 'array'
-             then array(select jsonb_array_elements_text(r -> 'tags')) else '{}'::text[] end,
-        nullif(r ->> 'notes', ''),
-        coalesce(nullif(r ->> 'opened_on', '')::date, current_date),
-        nullif(r ->> 'submitted_at', '')::timestamptz, nullif(r ->> 'decided_at', '')::timestamptz
-      );
-      -- counters only move once the whole row succeeded (variables are not rolled back)
+      select * into v from private.insert_applicant_case(p_org, r, true);
       v_cases := v_cases + 1;
-      if v_is_new then v_new_apps := v_new_apps + 1; else v_reused := v_reused + 1; end if;
+      if v.applicant_is_new then v_new_apps := v_new_apps + 1; else v_reused := v_reused + 1; end if;
     exception when others then
+      v_errors := v_errors || jsonb_build_object('index', r -> 'idx', 'error', sqlerrm);
       if sqlerrm like 'plan_limit:%' then
         v_limit := true;
-        v_errors := v_errors || jsonb_build_object('index', r -> 'idx', 'error', sqlerrm);
         exit;
       end if;
-      v_errors := v_errors || jsonb_build_object('index', r -> 'idx', 'error', sqlerrm);
     end;
   end loop;
 
@@ -228,13 +248,14 @@ begin
 end $$;
 
 revoke execute on function
-  public.import_rows(uuid, jsonb), public.export_applicant_data(uuid), public.erasure_file_paths(uuid),
+  public.import_rows(uuid, jsonb), public.create_applicant_with_case(uuid, jsonb), public.export_applicant_data(uuid), public.erasure_file_paths(uuid),
   public.erase_applicant(uuid), public.org_file_paths(uuid), public.delete_organization(uuid),
   public.portal_get(text), public.portal_register_file(text, uuid, text, text, text, bigint),
   private.portal_link(text)
   from public, anon, authenticated;
+grant execute on function private.insert_applicant_case(uuid, jsonb, boolean) to authenticated;
 grant execute on function
-  public.import_rows(uuid, jsonb), public.export_applicant_data(uuid), public.erasure_file_paths(uuid),
+  public.import_rows(uuid, jsonb), public.create_applicant_with_case(uuid, jsonb), public.export_applicant_data(uuid), public.erasure_file_paths(uuid),
   public.erase_applicant(uuid), public.org_file_paths(uuid), public.delete_organization(uuid)
   to authenticated;
 grant execute on function

@@ -399,6 +399,25 @@ create trigger tasks_after after insert or update on public.tasks
   for each row execute function private.tasks_after();
 
 -- ---------------------------------------------------------------------------
+-- Portal links
+-- ---------------------------------------------------------------------------
+create function private.portal_links_after() returns trigger
+language plpgsql security definer set search_path = '' as $$
+begin
+  if tg_op = 'INSERT' then
+    perform private.log_activity(new.org_id, new.case_id, 'portal_link_created', jsonb_build_object('link_id', new.id));
+    perform private.log_audit(new.org_id, 'portal_link.created', 'portal_link', new.id,
+                              jsonb_build_object('case_id', new.case_id, 'expires_at', new.expires_at));
+  elsif new.revoked_at is not null and old.revoked_at is null then
+    perform private.log_activity(new.org_id, new.case_id, 'portal_link_revoked', jsonb_build_object('link_id', new.id));
+    perform private.log_audit(new.org_id, 'portal_link.revoked', 'portal_link', new.id, jsonb_build_object('case_id', new.case_id));
+  end if;
+  return new;
+end $$;
+create trigger portal_links_after after insert or update on public.portal_links
+  for each row execute function private.portal_links_after();
+
+-- ---------------------------------------------------------------------------
 -- Audit of configuration changes
 -- ---------------------------------------------------------------------------
 create function private.audit_config_change() returns trigger
