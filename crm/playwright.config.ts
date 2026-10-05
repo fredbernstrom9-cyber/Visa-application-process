@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import { defineConfig, devices } from '@playwright/test';
 import { stackKeys } from './scripts/dev-stack/keys.mjs';
+import { OWNER_ID, OWNER_KEY_HASH } from './tests/e2e/owner-constants';
 
 const APP_PORT = Number(process.env.E2E_PORT || 3100);
 const GATEWAY = `http://127.0.0.1:${process.env.GATEWAY_PORT || 54321}`;
@@ -47,6 +48,8 @@ export default defineConfig({
       STRIPE_PRICE_ID_PREMIUM: 'price_e2e',
       STRIPE_WEBHOOK_SECRET: 'whsec_e2e_secret',
       EMAIL_PROVIDER: 'console',
+      OWNER_ACCESS_USER_ID: OWNER_ID,
+      OWNER_ACCESS_KEY_HASH: OWNER_KEY_HASH,
     },
   },
 });

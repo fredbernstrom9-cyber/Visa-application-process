@@ -2,8 +2,8 @@ import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
 const PUBLIC_PREFIXES = [
-  '/login', '/signup', '/forgot-password', '/reset-password', '/auth', '/portal', '/invite', '/setup',
-  '/api/stripe/webhook', '/api/cron', '/api/portal', '/api/health',
+  '/login', '/signup', '/forgot-password', '/reset-password', '/auth', '/portal', '/invite', '/setup', '/owner',
+  '/api/stripe/webhook', '/api/cron', '/api/portal', '/api/health', '/api/owner-access',
 ];
 
 export function isPublicPath(pathname: string): boolean {

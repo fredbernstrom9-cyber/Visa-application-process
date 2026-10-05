@@ -111,10 +111,27 @@ Copy `.env.example` to `.env.local`.
 | `STRIPE_PRICE_ID_PREMIUM` | for billing | recurring Price ID of the Premium plan |
 | `STRIPE_WEBHOOK_SECRET` | for billing | signing secret of the webhook endpoint |
 | `CRON_SECRET` | for cron | bearer secret protecting `/api/cron/daily` |
+| `OWNER_ACCESS_USER_ID`, `OWNER_ACCESS_KEY_HASH` | no | enable the private [owner link](#owner-access) (both required) |
 | `EMAIL_PROVIDER` | no | `console` (default; logs e-mails) or `resend` |
 | `EMAIL_FROM`, `RESEND_API_KEY` | with `resend` | sender and API key |
 
 Without Supabase variables the app shows a setup page instead of crashing. Without Stripe variables billing is disabled and the upgrade button explains why.
+
+---
+
+## <a id="owner-access"></a>Owner quick access (optional)
+
+A private link that signs **one** account (the site owner's) in without a password or an e-mail round trip: `https://your-domain/owner#key=<secret>`. Treat the link like a password: anyone who has it is signed in as the owner.
+
+- It is **off** unless both `OWNER_ACCESS_USER_ID` (the owner's id from Supabase → Authentication → Users) and `OWNER_ACCESS_KEY_HASH` are set. Only that single account can ever be signed in this way.
+- Generate the secret and its hash (only the hash is stored in the environment, so a leaked environment does not leak the link):
+  ```bash
+  SECRET=$(openssl rand -base64 32 | tr '+/' '-_' | tr -d '=')
+  echo "link:  https://your-domain/owner#key=$SECRET"
+  echo "hash:  $(printf %s "$SECRET" | sha256sum | cut -d' ' -f1)"   # -> OWNER_ACCESS_KEY_HASH
+  ```
+- The secret lives in the URL *fragment*, which browsers never send to servers, logs or other sites; the page removes it from the address bar immediately. Attempts are rate limited (5 per 10 minutes per IP).
+- To revoke the link, change or delete `OWNER_ACCESS_KEY_HASH` and redeploy.
 
 ---
 

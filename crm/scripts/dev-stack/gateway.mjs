@@ -190,6 +190,38 @@ async function handleAuth(req, res, url) {
     return res.end();
   }
 
+  // verifyOtp({ type, token_hash }): the token-hash flow used by /auth/confirm and owner quick access
+  if (route === '/verify' && req.method === 'POST') {
+    const b = await readJson(req);
+    const key = b.token_hash || b.token;
+    const o = otps.get(key);
+    if (!o) return authErr(res, 403, 'otp_expired', 'Email link is invalid or has expired');
+    otps.delete(key);
+    return json(res, 200, session(await userById(o.userId)));
+  }
+
+  // admin API (service role only): getUserById / generateLink
+  if (route.startsWith('/admin/')) {
+    const claims = verify(bearer(req));
+    if (!claims || claims.role !== 'service_role') return authErr(res, 403, 'not_admin', 'User not allowed');
+    const m = route.match(/^\/admin\/users\/([0-9a-f-]{36})$/i);
+    if (m && req.method === 'GET') {
+      const u = await userById(m[1]);
+      return u ? json(res, 200, userJson(u)) : authErr(res, 404, 'user_not_found', 'User not found');
+    }
+    if (route === '/admin/generate_link' && req.method === 'POST') {
+      const b = await readJson(req);
+      const u = await userByEmail(b.email || '');
+      if (!u) return authErr(res, 404, 'user_not_found', 'User not found');
+      const token = crypto.randomBytes(16).toString('hex');
+      otps.set(token, { userId: u.id });
+      return json(res, 200, {
+        action_link: `${PUBLIC_URL}/auth/v1/verify?token=${token}&type=magiclink`, email_otp: '000000', hashed_token: token,
+        verification_type: 'magiclink', redirect_to: '', ...userJson(u),
+      });
+    }
+  }
+
   if (route === '/user') {
     const claims = verify(bearer(req));
     if (!claims || claims.role !== 'authenticated') return authErr(res, 401, 'bad_jwt', 'invalid JWT');

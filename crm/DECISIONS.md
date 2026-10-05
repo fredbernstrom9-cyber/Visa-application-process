@@ -24,6 +24,7 @@ A running log of the choices that shape this codebase, with the reason for each.
 - **Rate limiting in Postgres.** `rate_limit_hit()` is a fixed-window counter (service role only). It works across serverless instances without Redis. It fails open (and logs) if the limiter itself is down, so an outage cannot lock everyone out. Tradeoff accepted: ~1 small write per protected request.
 - **Same-origin checks on cookie-authenticated POST routes** (billing). Server actions rely on Next's built-in origin protection.
 - **Open redirects** are prevented by `safeNext()`; e-mail links use the configured `NEXT_PUBLIC_APP_URL`, never the request `Host`, so a forged Host header cannot redirect a victim.
+- **Owner quick access is a bearer link, kept deliberately narrow.** Founders asked to skip the login for themselves. Instead of weakening authentication for everyone, an optional route exchanges a 256-bit secret for a *normal* Supabase session (admin `generateLink` + `verifyOtp`, i.e. the same machinery as an e-mailed magic link) for exactly one configured user id. The environment holds only SHA-256 of the secret (compared in constant time); the secret travels in the URL fragment so it never reaches server logs or `Referer`; it is rate limited, same-origin only and answers every failure identically. The tradeoff is accepted and documented: whoever holds the link is the owner, so it must be treated like a password and can be revoked by changing the hash.
 - **Exports defuse formula injection** (`'=…`) in CSV and rely on typed string cells for XLSX.
 
 ## Domain model
