@@ -112,6 +112,7 @@ Copy `.env.example` to `.env.local`.
 | `STRIPE_WEBHOOK_SECRET` | for billing | signing secret of the webhook endpoint |
 | `CRON_SECRET` | for cron | bearer secret protecting `/api/cron/daily` |
 | `OWNER_ACCESS_USER_ID`, `OWNER_ACCESS_KEY_HASH` | no | enable the private [owner link](#owner-access) (both required) |
+| `PLATFORM_ADMIN_USER_IDS` | no | comma-separated user ids allowed to open the [platform overview](#owner-access); defaults to `OWNER_ACCESS_USER_ID` |
 | `EMAIL_PROVIDER` | no | `console` (default; logs e-mails) or `resend` |
 | `EMAIL_FROM`, `RESEND_API_KEY` | with `resend` | sender and API key |
 
@@ -132,6 +133,13 @@ A private link that signs **one** account (the site owner's) in without a passwo
   ```
 - The secret lives in the URL *fragment*, which browsers never send to servers, logs or other sites; the page removes it from the address bar immediately. Attempts are rate limited (5 per 10 minutes per IP).
 - To revoke the link, change or delete `OWNER_ACCESS_KEY_HASH` and redeploy.
+
+### Platform overview (`/platform`, read-only)
+
+A page for the product owner showing usage across **all** organisations: totals, sign-ups per week and one row per organisation (plan, members, applicants, open cases, approved / refused, last activity). It never shows applicant names, e-mails, documents or notes; it is built from aggregates only.
+
+- Open it from the account menu ("Platform overview") or at `/platform`. Only the user ids in `PLATFORM_ADMIN_USER_IDS` (default: `OWNER_ACCESS_USER_ID`) can see it; everybody else gets an ordinary 404.
+- Needs migration `…000008_platform_overview.sql` and `SUPABASE_SERVICE_ROLE_KEY` (the data function is callable by the service role only, never by customers' sessions).
 
 ---
 

@@ -15,9 +15,12 @@ test.describe('owner quick access', () => {
     await page.goto(`/owner#key=${OWNER_KEY}`);
     await page.waitForURL(/\/(onboarding|overview)/);
     expect(page.url()).not.toContain(OWNER_KEY);
-    // a real session: a protected page opens, and the account is the configured owner
-    await page.goto('/settings/profile');
-    await expect(page.getByLabel('Full name')).toHaveValue('Owner Quick');
+    // a real session for the configured owner account (it has no organisation yet, so the app offers to create one)
+    await expect(page.getByText(OWNER_EMAIL)).toBeVisible();
+    await page.goto('/overview');
+    await expect(page).not.toHaveURL(/\/login/);
+    await page.reload();
+    await expect(page.getByText('Welcome, Owner')).toBeVisible();
   });
 
   test('a wrong or missing key never signs anyone in', async ({ page, request }) => {

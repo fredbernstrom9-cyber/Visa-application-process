@@ -2,6 +2,7 @@ import { AppShell } from '@/components/app/shell';
 import { OrgProvider } from '@/components/app/org-context';
 import { RealtimeProvider } from '@/components/live/realtime-provider';
 import { requireOrgContext } from '@/lib/auth/session';
+import { isPlatformAdmin } from '@/lib/platform-admin';
 import type { Plan } from '@/lib/plans';
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -18,7 +19,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       }}
     >
       <RealtimeProvider>
-        <AppShell>{children}</AppShell>
+        <AppShell platformAdmin={isPlatformAdmin(ctx.user.id)}>{children}</AppShell>
       </RealtimeProvider>
     </OrgProvider>
   );

@@ -46,7 +46,12 @@ test.describe('pipeline board', () => {
     const grip2 = page.getByRole('listitem').filter({ hasText: 'Dev Drop' }).getByRole('button', { name: /^Drag Dev Drop/ });
     await grip2.focus();
     await page.keyboard.press('Space');
+    // dnd-kit starts listening for the arrow keys one tick after pickup; a person is never that fast, a test is
+    await expect(page.getByText('Dev Drop', { exact: true })).toHaveCount(2); // the card plus the floating drag copy
+    await page.waitForTimeout(100);
     await page.keyboard.press('ArrowRight');
+    // drop only once the neighbouring column is highlighted as the target (pressing Space within milliseconds would drop in place)
+    await expect(page.getByRole('region', { name: /Documents in progress/ })).toHaveClass(/border-primary/);
     await page.keyboard.press('Space');
     await expect(page.getByText(/Dev Drop → /)).toBeVisible();
 

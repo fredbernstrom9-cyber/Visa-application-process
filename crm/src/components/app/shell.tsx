@@ -79,7 +79,7 @@ function SidebarBody({ onNavigate }: { onNavigate?: () => void }) {
   );
 }
 
-function UserMenu() {
+function UserMenu({ platformAdmin }: { platformAdmin: boolean }) {
   const { user, role, org } = useOrg();
   return (
     <DropdownMenu>
@@ -95,6 +95,7 @@ function UserMenu() {
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild><Link href="/settings/profile">Profile &amp; notifications</Link></DropdownMenuItem>
         <DropdownMenuItem asChild><Link href="/settings">Organisation settings</Link></DropdownMenuItem>
+        {platformAdmin && <DropdownMenuItem asChild><Link href="/platform">Platform overview</Link></DropdownMenuItem>}
         <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={() => { void signOutAction(); }}>Sign out</DropdownMenuItem>
       </DropdownMenuContent>
@@ -102,7 +103,7 @@ function UserMenu() {
   );
 }
 
-export function AppShell({ children }: { children: React.ReactNode }) {
+export function AppShell({ children, platformAdmin = false }: { children: React.ReactNode; platformAdmin?: boolean }) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -125,7 +126,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <LiveStatus />
           <NotificationsBell />
           <ThemeToggle />
-          <UserMenu />
+          <UserMenu platformAdmin={platformAdmin} />
         </div>
       </header>
 
