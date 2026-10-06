@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Bell, BellRing, CheckCheck, FileWarning, Flame, Gavel, ListChecks, UserPlus } from 'lucide-react';
+import { Bell, BellRing, BookOpenCheck, CheckCheck, FileWarning, Flame, Gavel, ListChecks, UserPlus } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -14,11 +14,11 @@ import { relativeTime } from '@/lib/format';
 
 const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   case_high_risk: Flame, document_overdue: FileWarning, task_overdue: ListChecks, decision_recorded: Gavel,
-  case_assigned: UserPlus, task_assigned: ListChecks,
+  case_assigned: UserPlus, task_assigned: ListChecks, rule_changed: BookOpenCheck,
 };
 const TONES: Record<string, string> = {
   case_high_risk: 'text-danger', document_overdue: 'text-warn', task_overdue: 'text-warn', decision_recorded: 'text-info',
-  case_assigned: 'text-primary', task_assigned: 'text-primary',
+  case_assigned: 'text-primary', task_assigned: 'text-primary', rule_changed: 'text-warn',
 };
 
 export function useNotifications() {
@@ -75,7 +75,7 @@ export function NotificationsBell() {
           </Button>
         </div>
         <ul className="max-h-96 overflow-y-auto">
-          {items.length === 0 && <li className="px-4 py-8 text-center text-sm text-muted-foreground">You&apos;re all caught up. Alerts for high-risk cases, overdue documents and tasks, decisions and assignments appear here.</li>}
+          {items.length === 0 && <li className="px-4 py-8 text-center text-sm text-muted-foreground">You&apos;re all caught up. Alerts for high-risk cases, overdue documents and tasks, decisions, assignments and rule changes appear here.</li>}
           {items.map((n) => {
             const Icon = ICONS[n.type] ?? Bell;
             return (
@@ -87,6 +87,7 @@ export function NotificationsBell() {
                     void markRead([n.id]);
                     setOpen(false);
                     if (n.case_id) router.push(`/cases/${n.case_id}`);
+                    else if (n.type === 'rule_changed') router.push('/rulebook#changes');
                   }}
                 >
                   <Icon className={cn('mt-0.5 size-4 shrink-0', TONES[n.type] ?? 'text-muted-foreground')} aria-hidden />

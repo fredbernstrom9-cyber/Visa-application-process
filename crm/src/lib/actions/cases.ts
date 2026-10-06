@@ -14,6 +14,7 @@ const tags = z.array(z.string().trim().min(1).max(40)).max(30).default([]);
 const caseFieldsSchema = z.object({
   destination: country.refine((c) => DESTINATION_CODES.includes(c), 'Choose an EU / Schengen destination'),
   visa_type: z.enum(['C', 'D', 'other']),
+  route: z.enum(['study', 'short_stay', 'work', 'research', 'traineeship', 'family']).nullish().or(z.literal('')).transform((v) => (v ? v : null)),
   purpose: optText(200),
   programme: optText(200),
   intake: optText(80),

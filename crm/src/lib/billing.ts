@@ -37,7 +37,8 @@ export async function applySubscription(admin: SupabaseClient, sub: Stripe.Subsc
   if (!orgId) return null;
   const at = new Date(eventCreated * 1000).toISOString();
   const { data: cur } = await admin.from('organizations').select('billing_event_at').eq('id', orgId).maybeSingle();
-  if (cur?.billing_event_at && cur.billing_event_at > at) return orgId; // stale event
+  // Compare instants, not strings: the database may format timestamps with a non-UTC offset.
+  if (cur?.billing_event_at && Date.parse(cur.billing_event_at as string) > eventCreated * 1000) return orgId; // stale event
   const { error } = await admin.from('organizations').update({
     plan: planForStatus(sub.status),
     subscription_status: sub.status,

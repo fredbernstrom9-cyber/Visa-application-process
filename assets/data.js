@@ -98,7 +98,7 @@ window.CE_DATA = (function () {
       gov: ["Tunisia Ministry of Foreign Affairs", "https://www.diplomatie.gov.tn"] }),
 
     // Asia
-    O("BGD", "Bangladesh", "Bangladeshi", "Asia", { irlOffice: "New Delhi",
+    O("BGD", "Bangladesh", "Bangladeshi", "Asia", { eef: true, irlOffice: "New Delhi",
       gov: ["Bangladesh Ministry of Foreign Affairs: missions abroad", "https://mofa.gov.bd/site/view/service_box_items/BANGLADESH%20MISSIONS%20ABROAD"],
       notes: [{ scope: "study", dest: "DEU", text: "The German Embassy in Dhaka reports very long waiting times for student visa appointments because of demand. Read its student visa FAQ before planning an intake.", src: ["de-dhaka-faq"] }] }),
     O("IDN", "Indonesia", "Indonesian", "Asia", { eef: true,

@@ -89,6 +89,27 @@ export async function applyChecklistAction(input: { caseIds: string[]; templateI
   });
 }
 
+/** Add every matching ClearEntry rulebook item the cases do not have yet. */
+export async function applyRulebookAction(input: { caseIds: string[] }): Promise<ActionResult<{ added: number }>> {
+  const p = parse(z.object({ caseIds: z.array(uuid).min(1).max(500) }), input);
+  if ('error' in p) return p.error;
+  return withOrg({ write: true }, async ({ supabase }) => {
+    const { data, error } = await supabase.rpc('apply_rulebook', { p_cases: p.data.caseIds });
+    if (error) return dbError(error);
+    return ok({ added: (data as number) ?? 0 });
+  });
+}
+
+/** Clear the "rule changed" flag after an advisor has reviewed the item against the new rule. */
+export async function acknowledgeRuleChangeAction(itemId: string): Promise<ActionResult> {
+  if (!uuid.safeParse(itemId).success) return fail('Invalid item.', 'validation');
+  return withOrg({ write: true }, async ({ supabase }) => {
+    const { data, error } = await supabase.from('checklist_items').update({ rule_changed_at: null }).eq('id', itemId).select('id');
+    if (error) return dbError(error);
+    return data?.length ? ok(undefined) : fail('Not found or no permission.', 'not_found');
+  });
+}
+
 // ---------------------------------------------------------------------------
 // Case checklist items
 // ---------------------------------------------------------------------------

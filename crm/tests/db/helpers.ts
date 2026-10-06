@@ -41,7 +41,8 @@ export async function createTestDb(): Promise<TestDb> {
 
   const url = new URL(DB_URL);
   url.pathname = `/${name}`;
-  const pool = new Pool({ connectionString: url.toString(), max: 4 });
+  // Supabase databases run in UTC; pin it so results do not depend on the machine's time zone.
+  const pool = new Pool({ connectionString: url.toString(), max: 4, options: '-c timezone=UTC' });
 
   const run = async (sql: string) => {
     const c = await pool.connect();

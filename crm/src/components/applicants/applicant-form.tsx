@@ -13,8 +13,9 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input, Select, Textarea } from '@/components/ui/input';
 import { Field } from '@/components/ui/label';
 import { addCaseAction, createApplicantAction, updateApplicantAction, updateCaseAction } from '@/lib/actions/cases';
+import { applyRulebookAction } from '@/lib/actions/checklists';
 import { countryOptions, destinationOptions, flagEmoji } from '@/lib/countries';
-import { STAGES, VISA_TYPES } from '@/lib/domain';
+import { defaultRoute, ROUTES, STAGES, VISA_TYPES, type VisaType } from '@/lib/domain';
 import { useFilterOptions, useMembers } from '@/lib/queries/cases';
 import type { CaseRow } from '@/lib/types';
 
@@ -25,7 +26,7 @@ type Mode =
 
 interface FormState {
   full_name: string; email: string; phone: string; nationality: string; residence_country: string;
-  destination: string; visa_type: string; purpose: string; programme: string; intake: string;
+  destination: string; visa_type: string; route: string; purpose: string; programme: string; intake: string;
   start_date: string; appointment_date: string; assigned_to: string; stage: string; tags: string[]; notes: string;
 }
 
@@ -34,12 +35,12 @@ function initial(mode: Mode, defaultAdvisor: string): FormState {
     const r = mode.row;
     return {
       full_name: r.full_name, email: r.email ?? '', phone: r.phone ?? '', nationality: r.nationality ?? '', residence_country: r.residence_country ?? '',
-      destination: r.destination, visa_type: r.visa_type, purpose: r.purpose ?? '', programme: r.programme ?? '', intake: r.intake ?? '',
+      destination: r.destination, visa_type: r.visa_type, route: r.route ?? '', purpose: r.purpose ?? '', programme: r.programme ?? '', intake: r.intake ?? '',
       start_date: r.start_date ?? '', appointment_date: r.appointment_date ?? '', assigned_to: r.assigned_to ?? '', stage: r.stage, tags: r.tags, notes: r.notes ?? '',
     };
   }
   return {
-    full_name: '', email: '', phone: '', nationality: '', residence_country: '', destination: '', visa_type: 'D', purpose: '', programme: '', intake: '',
+    full_name: '', email: '', phone: '', nationality: '', residence_country: '', destination: '', visa_type: 'D', route: 'study', purpose: '', programme: '', intake: '',
     start_date: '', appointment_date: '', assigned_to: defaultAdvisor, stage: 'admitted', tags: [], notes: '',
   };
 }
@@ -77,7 +78,7 @@ function ApplicantFormBody({ mode, onClose }: { mode: Mode; onClose: () => void 
     setError(null);
     setFieldErrors({});
     const caseFields = {
-      destination: v.destination, visa_type: v.visa_type, purpose: v.purpose, programme: v.programme, intake: v.intake,
+      destination: v.destination, visa_type: v.visa_type, route: v.route || null, purpose: v.purpose, programme: v.programme, intake: v.intake,
       start_date: v.start_date, appointment_date: v.appointment_date, assigned_to: v.assigned_to || null, tags: v.tags, notes: v.notes,
     };
     const person = { full_name: v.full_name, email: v.email, phone: v.phone, nationality: v.nationality, residence_country: v.residence_country };
@@ -91,6 +92,15 @@ function ApplicantFormBody({ mode, onClose }: { mode: Mode; onClose: () => void 
       }
       if (!res.ok) { setError(res.error); setFieldErrors(res.fieldErrors ?? {}); return; }
       toast.success(mode.kind === 'edit' ? 'Changes saved' : 'Applicant added');
+      if (mode.kind === 'edit') {
+        const r = mode.row;
+        const rulesMayDiffer = (v.route || null) !== r.route || v.destination !== r.destination
+          || (v.nationality || null) !== r.nationality || (v.residence_country || null) !== r.residence_country;
+        if (rulesMayDiffer && v.route) {
+          const a = await applyRulebookAction({ caseIds: [r.id] });
+          if (a.ok && a.data.added > 0) toast.info(`Added ${a.data.added} rulebook items for the new destination, route or nationality. Remove any that no longer apply.`);
+        }
+      }
       onClose();
       void qc.invalidateQueries();
       announce(['cases', 'case', 'analytics', 'filter-options']);
@@ -141,8 +151,20 @@ function ApplicantFormBody({ mode, onClose }: { mode: Mode; onClose: () => void 
                 {destinationOptions().map((c) => <option key={c.code} value={c.code}>{flagEmoji(c.code)} {c.name}</option>)}
               </Select>
             </Field>
+            <Field label="Route" htmlFor="f-route" hint="Picks the rulebook checklist." error={err('route')}>
+              <Select id="f-route" value={v.route} onChange={(e) => {
+                const r = ROUTES.find((x) => x.key === e.target.value);
+                setV((p) => ({ ...p, route: e.target.value, visa_type: r ? r.visa : p.visa_type }));
+              }}>
+                <option value="">No route (own checklist only)</option>
+                {ROUTES.map((r) => <option key={r.key} value={r.key}>{r.label}</option>)}
+              </Select>
+            </Field>
             <Field label="Visa type" htmlFor="f-visa" required>
-              <Select id="f-visa" value={v.visa_type} onChange={(e) => set('visa_type', e.target.value)}>
+              <Select id="f-visa" value={v.visa_type} onChange={(e) => {
+                const vt = e.target.value as VisaType;
+                setV((p) => ({ ...p, visa_type: vt, route: p.route && ROUTES.find((x) => x.key === p.route)?.visa === vt ? p.route : (defaultRoute(vt) ?? '') }));
+              }}>
                 {VISA_TYPES.map((t) => <option key={t.key} value={t.key}>{t.label}</option>)}
               </Select>
             </Field>

@@ -1,0 +1,21 @@
+name: Rulebook links
+
+# Monthly check that every rulebook source still answers. A broken link usually means an authority
+# rewrote its page, which is exactly when the rule behind it needs re-checking.
+on:
+  schedule: [{ cron: '0 6 1 * *' }]
+  workflow_dispatch:
+
+defaults:
+  run:
+    working-directory: crm
+
+jobs:
+  links:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: crm/package-lock.json }
+      - run: npm ci
+      - run: npm run rulebook:links

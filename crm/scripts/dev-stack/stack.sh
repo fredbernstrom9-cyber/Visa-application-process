@@ -56,6 +56,8 @@ do \$\$ begin
 end \$\$;
 grant anon, authenticated, service_role to authenticator;
 SQL
+  # Load the ClearEntry rulebook (idempotent; prints what changed).
+  SUPABASE_DB_URL="$SUPER_URL/${DB_NAME}" npx --no-install tsx scripts/rulebook-sync.ts | sed 's/^/  /'
 }
 
 start() {

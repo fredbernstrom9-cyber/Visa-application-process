@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  Activity, CalendarClock, ClipboardList, FileBarChart, KanbanSquare, LayoutDashboard, ListChecks, Menu, Settings, Sparkles, Users,
+  Activity, BookOpenCheck, CalendarClock, ClipboardList, FileBarChart, KanbanSquare, LayoutDashboard, ListChecks, Menu, Settings, Sparkles, Users,
 } from 'lucide-react';
 import { useState } from 'react';
 import { Brand } from '@/components/brand';
@@ -28,6 +28,7 @@ export const NAV = [
   { href: '/deadlines', label: 'Deadlines', icon: CalendarClock },
   { href: '/tasks', label: 'My tasks', icon: ListChecks },
   { href: '/activity', label: 'Live activity', icon: Activity },
+  { href: '/rulebook', label: 'Rulebook', icon: BookOpenCheck },
   { href: '/checklists', label: 'Checklists', icon: ClipboardList },
   { href: '/reports', label: 'Reports', icon: FileBarChart },
   { href: '/settings', label: 'Settings', icon: Settings },

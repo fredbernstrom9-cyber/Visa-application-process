@@ -1,6 +1,6 @@
 'use client';
 
-import { Bot, CheckCircle2, FileText, Gavel, Link2, ListPlus, PlusCircle, Repeat, Upload, UserCog, Download, FileUp, Circle } from 'lucide-react';
+import { BookOpenCheck, Bot, CheckCircle2, FileText, Gavel, Link2, ListPlus, PlusCircle, Repeat, Upload, UserCog, Download, FileUp, Circle } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo } from 'react';
 import { UserAvatar } from '@/components/ui/misc';
@@ -13,7 +13,7 @@ import { cn } from '@/lib/utils';
 
 const ICONS: Record<IconKey, React.ComponentType<{ className?: string }>> = {
   plus: PlusCircle, stage: Repeat, gavel: Gavel, user: UserCog, file: FileText, upload: Upload, task: ListPlus,
-  check: CheckCircle2, import: FileUp, export: Download, link: Link2, dot: Circle,
+  check: CheckCircle2, import: FileUp, export: Download, link: Link2, rule: BookOpenCheck, dot: Circle,
 };
 
 export function useNameResolver() {

@@ -37,7 +37,8 @@ A multi-tenant B2B web app for universities, business schools and student-recrui
 - **Applicants and cases**: full applicant profile, EU/Schengen destination, visa type (C / D / other), intake, start and appointment dates, advisor, tags, notes. Every stage change is stored with user and timestamp.
 - **Views**: data grid (search, multi-filter, sort, column chooser, saved and shared views, bulk actions), drag-and-drop pipeline (pointer, touch and keyboard, plus a "Move to…" menu for phones), case detail with presence.
 - **CSV / XLSX import**: automatic column matching, manual mapping step, per-row validation, preview before anything is saved, de-duplication on e-mail, downloadable error report.
-- **Document checklists**: templates per destination + visa type with optional nationality override, official source and "last checked" date; applied automatically to new cases; per-item status, due date, comment and private file upload with expiring signed URLs.
+- **ClearEntry rulebook**: source-cited requirements for every EU/Schengen destination and six routes (study, short stay, EU Blue Card, research, traineeship, family), targeted by nationality and country of residence, with key figures (funds, fees, work rights). New cases are filled from it automatically; advisors are notified when a rule affecting their open cases changes, and changed items are flagged until reviewed. See [The rulebook](#rulebook).
+- **Document checklists**: your own templates per destination + visa type with optional nationality override, official source and "last checked" date; applied automatically to new cases; per-item status, due date, comment and private file upload with expiring signed URLs.
 - **Risk scoring**: transparent and configurable (days to start vs. processing time, appointment, % documents verified). The reason is shown next to every score, e.g. *"Starts in 21d · no appointment · 40% docs verified · needs ~44d"*.
 - **Live tracking**: lists, board, KPIs and charts update without refresh via Supabase Realtime; online presence and "also viewing this case"; highlight on rows changed by others; connection indicator with automatic resync; live activity feed with filters; per-case timeline.
 - **Notifications**: bell + toast for *became high risk*, *overdue document / task*, *decision recorded*, *assigned to me*; optional daily e-mail digest behind a provider interface.
@@ -77,7 +78,7 @@ psql postgresql://postgres@127.0.0.1:54329/clearentry_dev -c "update organizatio
 ## <a id="supabase-project"></a>Set up your own Supabase project
 
 1. **Create a project** at [supabase.com](https://supabase.com) (pick a region close to your Vercel region).
-2. **Apply the migrations** in `supabase/migrations/` (they are ordered and idempotent per environment):
+2. **Apply the migrations** in `supabase/migrations/` (they are ordered and idempotent per environment), then load the rulebook with `npm run rulebook:sync` (see [The rulebook](#rulebook)):
    ```bash
    npx supabase login
    npx supabase link --project-ref <your-project-ref>
@@ -95,6 +96,21 @@ psql postgresql://postgres@127.0.0.1:54329/clearentry_dev -c "update organizatio
 To re-create the database in a new project, simply run the migrations again; to change the schema, add a **new** migration file rather than editing an applied one.
 
 ---
+
+## <a id="rulebook"></a>The rulebook
+
+The rulebook lives in `rulebook/` as typed data: `guides/` (one file per destination or route family), `sources.ts`, `nationalities.ts` (visa status of every nationality) and `changes.ts` (the dated change log).
+
+```bash
+npm run rulebook:check                 # validate only (also part of npm test)
+SUPABASE_DB_URL=postgresql://... npm run rulebook:sync -- --dry-run   # show what would change
+SUPABASE_DB_URL=postgresql://... npm run rulebook:sync                # write it
+npm run rulebook:links                 # report source links that no longer answer
+```
+
+`SUPABASE_DB_URL` is the *Session pooler* connection string from the Supabase dashboard (Connect). The local dev stack syncs automatically on `npm run stack:start`.
+
+To change a rule: edit it, cite its source (add one to `sources.ts` if needed), set `conf` honestly (`official`, `multi` or `check`), bump `lastChecked` on the guide, and add an entry to `changes.ts` describing what changed. When synced, open cases using the rule are flagged and organisations with affected open cases are notified (changes effective in the last 45 days only). Never rename a rule `key` or a change `id`.
 
 ## <a id="environment-variables"></a>Environment variables
 

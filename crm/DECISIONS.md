@@ -37,7 +37,17 @@ A running log of the choices that shape this codebase, with the reason for each.
 - **Activity payloads carry no personal data.** Names are joined at read time (`activity_feed` view), so deleting an applicant removes every trace by cascade. The audit log keeps only IDs and enums; erasure additionally blanks the metadata of entries about that person and records an anonymous `applicant.erased`.
 - **Checklist templates are matched by destination + visa type, nationality override first.** Applying is idempotent through a unique `(case_id, template_item_id)` index. Template item IDs are stable across edits so already-applied checklists keep their link.
 - **Comments on checklist items are visible to the applicant in the portal** (they are how an advisor says "photo too blurry"); internal notes belong on the case.
-- **No seed data, including checklists.** Requirements vary by consulate and nationality and change often; shipping pre-filled lists would be both a liability and a lie. The only inserted rows are the plan tables.
+- **No seed data for customers; one shared, source-cited rulebook instead (October 2026).** Customer tables still start empty. Requirements now come from the ClearEntry rulebook (`rulebook/`): typed data in the repo, validated by tests, synced into global read-only tables. It replaces "every agency builds its own lists" with the product's main selling point, without the liability of unsourced lists: every rule cites its sources, carries a confidence label (*official*, *2+ sources*, *verify*) and a checked date, and the UI always shows them. An organisation's own matching template still wins over the rulebook, and `org_settings.use_rulebook` turns it off.
+
+## Rulebook
+
+- **Authored as TypeScript, not edited in the database.** Reviewable in pull requests, diffable, and validated before it can reach any customer: `compileRulebook` rejects unknown sources, "official" items without an official source, "2+ sources" items with one, future check dates, duplicate keys and unknown country codes. `npm run rulebook:sync` writes it in one transaction.
+- **Global tables, no `org_id`.** The rulebook is the vendor's, identical for everyone and free of personal data. Customers get `select` only (RLS policies plus explicit revokes); only the service role writes.
+- **Targeting is resolved at compile time.** Flags such as "needs a Schengen visa" or "§41 AufenthV" become explicit nationality lists, and consulate rules target the country of *residence*, so the database only does array membership tests. An unknown nationality or residence gets only rules that apply to everyone; EU/EEA/Swiss citizens get no visa checklist.
+- **Stable ids and content hashes.** A rule id (`DE.study.funds`) never changes; its hash does when the wording, targeting or sources change. The sync bumps the version and a trigger flags the item on open cases (`checklist_items.rule_changed_at`) until an advisor marks it reviewed. Retired rules are deactivated, never deleted, so existing checklist items keep their link.
+- **Change log is insert-only and notifies on insert.** Each `rulebook_changes` row notifies owners/admins once per affected organisation (with the count of open cases) and the assigned advisor per case, and adds a timeline entry. History older than 45 days is imported with `notify = false` so a first sync does not flood anyone.
+- **Routes are a column on cases, defaulted from the visa type** (C → short stay, D → study). Routes are text with a check function rather than an enum so new routes need no type migration.
+- **After-arrival steps are not "required".** They show in the checklist but do not count toward documents verified, so they cannot inflate a case's risk before departure.
 
 ## Analytics
 

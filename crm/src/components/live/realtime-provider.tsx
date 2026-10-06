@@ -139,11 +139,13 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
     }) as never);
     channel.on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` }, ((p: { new: NotificationRow }) => {
       setLastSyncedAt(Date.now());
-      queue(['notifications']);
       const n = p.new;
+      queue(n.type === 'rule_changed' ? ['notifications', 'rulebook', 'items'] : ['notifications']);
       toast(n.title, {
         description: n.body ?? undefined,
-        action: n.case_id ? { label: 'Open', onClick: () => router.push(`/cases/${n.case_id}`) } : undefined,
+        action: n.case_id
+          ? { label: 'Open', onClick: () => router.push(`/cases/${n.case_id}`) }
+          : n.type === 'rule_changed' ? { label: 'Review', onClick: () => router.push('/rulebook#changes') } : undefined,
         duration: 8000,
       });
     }) as never);
