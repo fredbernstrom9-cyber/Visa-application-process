@@ -476,3 +476,109 @@ revoke execute on function public.apply_rulebook(uuid[]) from public, anon;
 revoke execute on function public.case_rule_facts(uuid) from public, anon;
 revoke execute on function public.rule_change_cases(text) from public, anon;
 revoke execute on function public.rule_change_counts(uuid) from public, anon;
+
+-- ---------------------------------------------------------------------------
+-- Sync: one function applies a compiled rulebook (built by rulebook/compile.ts). Used by
+-- `npm run rulebook:sync`, by the app on deploy (service role) and by the tests. Unchanged rows
+-- are left alone; changed requirements bump their version (the trigger above flags open cases);
+-- rows missing from the payload are deactivated, never deleted; change-log entries are
+-- insert-only and only notify when effective within the last 45 days.
+-- ---------------------------------------------------------------------------
+create function public.rulebook_apply(p jsonb, p_today date default current_date) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare
+  v_added text[]; v_changed text[]; v_retired text[]; v_facts integer; v_pub jsonb;
+  v_cutoff date := p_today - 45;
+begin
+  if jsonb_typeof(p -> 'requirements') <> 'array' or coalesce(p ->> 'version', '') = '' then
+    raise exception 'invalid_rulebook';
+  end if;
+  perform pg_advisory_xact_lock(hashtext('clearentry.rulebook'));
+
+  insert into public.rulebook_sources (id, kind, publisher, published, title, url)
+  select id, kind, publisher, published, title, url from jsonb_populate_recordset(null::public.rulebook_sources, p -> 'sources')
+  on conflict (id) do update set kind = excluded.kind, publisher = excluded.publisher, published = excluded.published,
+    title = excluded.title, url = excluded.url, updated_at = now()
+  where (rulebook_sources.kind, rulebook_sources.publisher, rulebook_sources.published, rulebook_sources.title, rulebook_sources.url)
+        is distinct from (excluded.kind, excluded.publisher, excluded.published, excluded.title, excluded.url);
+
+  insert into public.rulebook_nationalities (code, name, schengen_visa, ireland_visa, flags, coverage)
+  select code, name, schengen_visa, ireland_visa, flags, coverage from jsonb_populate_recordset(null::public.rulebook_nationalities, p -> 'nationalities')
+  on conflict (code) do update set name = excluded.name, schengen_visa = excluded.schengen_visa, ireland_visa = excluded.ireland_visa,
+    flags = excluded.flags, coverage = excluded.coverage, updated_at = now()
+  where (rulebook_nationalities.name, rulebook_nationalities.schengen_visa, rulebook_nationalities.ireland_visa, rulebook_nationalities.flags, rulebook_nationalities.coverage)
+        is distinct from (excluded.name, excluded.schengen_visa, excluded.ireland_visa, excluded.flags, excluded.coverage);
+
+  insert into public.rulebook_guides (id, destination, route, level, title, summary, permit, links, last_checked, active)
+  select id, destination, route, level, title, summary, permit, links, last_checked, true
+    from jsonb_populate_recordset(null::public.rulebook_guides, p -> 'guides')
+  on conflict (id) do update set destination = excluded.destination, route = excluded.route, level = excluded.level,
+    title = excluded.title, summary = excluded.summary, permit = excluded.permit, links = excluded.links,
+    last_checked = excluded.last_checked, active = true, updated_at = now();
+  update public.rulebook_guides set active = false, updated_at = now()
+   where active and id not in (select x ->> 'id' from jsonb_array_elements(p -> 'guides') x);
+
+  create temp table _rq on commit drop as
+    select * from jsonb_populate_recordset(null::public.rulebook_requirements, p -> 'requirements');
+  select coalesce(array_agg(n.id order by n.id) filter (where o.id is null), '{}'),
+         coalesce(array_agg(n.id order by n.id) filter (where o.id is not null and (o.content_hash <> n.content_hash or not o.active)), '{}')
+    into v_added, v_changed
+    from _rq n left join public.rulebook_requirements o on o.id = n.id;
+
+  insert into public.rulebook_requirements (id, guide_id, kind, label, detail, required, due_days_before_start, sort_order,
+      nat_in, nat_not_in, residence_in, residence_not_in, confidence, source_ids, last_checked, content_hash, active)
+  select id, guide_id, kind, label, detail, required, due_days_before_start, sort_order,
+      nat_in, coalesce(nat_not_in, '{}'), residence_in, coalesce(residence_not_in, '{}'), confidence, source_ids, last_checked, content_hash, true
+    from _rq
+  on conflict (id) do update set guide_id = excluded.guide_id, kind = excluded.kind, label = excluded.label, detail = excluded.detail,
+    required = excluded.required, due_days_before_start = excluded.due_days_before_start, sort_order = excluded.sort_order,
+    nat_in = excluded.nat_in, nat_not_in = excluded.nat_not_in, residence_in = excluded.residence_in,
+    residence_not_in = excluded.residence_not_in, confidence = excluded.confidence, source_ids = excluded.source_ids,
+    last_checked = excluded.last_checked, content_hash = excluded.content_hash, active = true
+  where rulebook_requirements.content_hash is distinct from excluded.content_hash
+     or rulebook_requirements.last_checked is distinct from excluded.last_checked
+     or rulebook_requirements.sort_order is distinct from excluded.sort_order
+     or not rulebook_requirements.active;
+  with r as (
+    update public.rulebook_requirements set active = false
+     where active and id not in (select id from _rq) returning id
+  ) select coalesce(array_agg(id order by id), '{}') into v_retired from r;
+
+  create temp table _fa on commit drop as
+    select * from jsonb_populate_recordset(null::public.rulebook_facts, p -> 'facts');
+  select count(*) into v_facts from _fa n join public.rulebook_facts o on o.id = n.id where o.content_hash <> n.content_hash;
+  insert into public.rulebook_facts (id, guide_id, kind, label, value, amount_eur, sort_order, nat_in, nat_not_in, residence_in,
+      residence_not_in, confidence, source_ids, last_checked, content_hash, active)
+  select id, guide_id, kind, label, value, amount_eur, sort_order, nat_in, coalesce(nat_not_in, '{}'), residence_in,
+      coalesce(residence_not_in, '{}'), confidence, source_ids, last_checked, content_hash, true
+    from _fa
+  on conflict (id) do update set guide_id = excluded.guide_id, kind = excluded.kind, label = excluded.label, value = excluded.value,
+    amount_eur = excluded.amount_eur, sort_order = excluded.sort_order, nat_in = excluded.nat_in, nat_not_in = excluded.nat_not_in,
+    residence_in = excluded.residence_in, residence_not_in = excluded.residence_not_in, confidence = excluded.confidence,
+    source_ids = excluded.source_ids, last_checked = excluded.last_checked, content_hash = excluded.content_hash, active = true
+  where rulebook_facts.content_hash is distinct from excluded.content_hash
+     or rulebook_facts.last_checked is distinct from excluded.last_checked
+     or rulebook_facts.sort_order is distinct from excluded.sort_order
+     or not rulebook_facts.active;
+  update public.rulebook_facts set active = false where active and id not in (select id from _fa);
+
+  -- Change log: insert-only, oldest first, so notifications go out in date order.
+  with fresh as (
+    select c.* from jsonb_populate_recordset(null::public.rulebook_changes, p -> 'changes') c
+     where not exists (select 1 from public.rulebook_changes e where e.id = c.id)
+  ), ins as (
+    insert into public.rulebook_changes (id, effective_on, destinations, routes, nat_in, summary, detail, severity, source_ids, requirement_ids, notify)
+    select id, effective_on, destinations, routes, nat_in, summary, detail, severity, source_ids, coalesce(requirement_ids, '{}'),
+           effective_on >= v_cutoff
+      from fresh order by effective_on, id
+    returning id, notify, effective_on
+  ) select coalesce(jsonb_agg(jsonb_build_object('id', id, 'notified', notify) order by effective_on, id), '[]') into v_pub from ins;
+
+  insert into public.rulebook_meta (id, version, verified_on, synced_at) values (true, p ->> 'version', (p ->> 'verifiedOn')::date, now())
+  on conflict (id) do update set version = excluded.version, verified_on = excluded.verified_on, synced_at = now();
+
+  return jsonb_build_object('version', p ->> 'version', 'requirementsAdded', to_jsonb(v_added), 'requirementsChanged', to_jsonb(v_changed),
+    'requirementsRetired', to_jsonb(v_retired), 'factsChanged', v_facts, 'changesPublished', v_pub);
+end $$;
+revoke execute on function public.rulebook_apply(jsonb, date) from public, anon, authenticated;
+grant execute on function public.rulebook_apply(jsonb, date) to service_role;

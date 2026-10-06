@@ -4,9 +4,12 @@ import { RealtimeProvider } from '@/components/live/realtime-provider';
 import { requireOrgContext } from '@/lib/auth/session';
 import { isPlatformAdmin } from '@/lib/platform-admin';
 import type { Plan } from '@/lib/plans';
+import { ensureRulebookSynced } from '@/lib/rulebook-sync';
+import { after } from 'next/server';
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const ctx = await requireOrgContext();
+  after(() => ensureRulebookSynced()); // no-op once the database has this deploy's rulebook
   return (
     <OrgProvider
       value={{

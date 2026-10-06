@@ -78,7 +78,7 @@ psql postgresql://postgres@127.0.0.1:54329/clearentry_dev -c "update organizatio
 ## <a id="supabase-project"></a>Set up your own Supabase project
 
 1. **Create a project** at [supabase.com](https://supabase.com) (pick a region close to your Vercel region).
-2. **Apply the migrations** in `supabase/migrations/` (they are ordered and idempotent per environment), then load the rulebook with `npm run rulebook:sync` (see [The rulebook](#rulebook)):
+2. **Apply the migrations** in `supabase/migrations/` (they are ordered and idempotent per environment), the app then loads the rulebook itself on first use (see [The rulebook](#rulebook)):
    ```bash
    npx supabase login
    npx supabase link --project-ref <your-project-ref>
@@ -108,7 +108,7 @@ SUPABASE_DB_URL=postgresql://... npm run rulebook:sync                # write it
 npm run rulebook:links                 # report source links that no longer answer
 ```
 
-`SUPABASE_DB_URL` is the *Session pooler* connection string from the Supabase dashboard (Connect). The local dev stack syncs automatically on `npm run stack:start`.
+Normally you do not need to run anything: each deployment loads its own rulebook into the database on first use (and the daily cron re-checks), through the service-role-only function `public.rulebook_apply`. The CLI is for local work and dry runs. `SUPABASE_DB_URL` is the *Session pooler* connection string from the Supabase dashboard (Connect). The local dev stack syncs on `npm run stack:start`.
 
 To change a rule: edit it, cite its source (add one to `sources.ts` if needed), set `conf` honestly (`official`, `multi` or `check`), bump `lastChecked` on the guide, and add an entry to `changes.ts` describing what changed. When synced, open cases using the rule are flagged and organisations with affected open cases are notified (changes effective in the last 45 days only). Never rename a rule `key` or a change `id`.
 
