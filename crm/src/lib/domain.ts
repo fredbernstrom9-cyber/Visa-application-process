@@ -29,6 +29,27 @@ export const VISA_TYPES: readonly { key: VisaType; label: string; short: string 
 ];
 export const visaLabel = (v: string) => VISA_TYPES.find((x) => x.key === v)?.short ?? v;
 
+/** The route a case follows; it picks the ClearEntry rulebook guide. Mirrors private.valid_route(). */
+export type Route = 'study' | 'short_stay' | 'work' | 'research' | 'traineeship' | 'family';
+export const ROUTES: readonly { key: Route; label: string; visa: VisaType }[] = [
+  { key: 'study', label: 'Study (higher education)', visa: 'D' },
+  { key: 'short_stay', label: 'Short stay (up to 90 days)', visa: 'C' },
+  { key: 'work', label: 'Highly qualified work (EU Blue Card)', visa: 'D' },
+  { key: 'research', label: 'Research (hosting agreement)', visa: 'D' },
+  { key: 'traineeship', label: 'Traineeship', visa: 'D' },
+  { key: 'family', label: 'Family reunification', visa: 'D' },
+];
+export const routeLabel = (r: string | null | undefined) => ROUTES.find((x) => x.key === r)?.label ?? 'No route';
+/** The route a visa type suggests when none is chosen (same rule as the database trigger). */
+export const defaultRoute = (v: VisaType): Route | null => (v === 'C' ? 'short_stay' : v === 'D' ? 'study' : null);
+
+export type Confidence = 'official' | 'multi' | 'check';
+export const CONFIDENCE: Record<Confidence, { label: string; tone: Tone; blurb: string }> = {
+  official: { label: 'Official source', tone: 'ok', blurb: 'Confirmed on an official government or EU source.' },
+  multi: { label: '2+ sources', tone: 'info', blurb: 'Confirmed by two or more independent sources.' },
+  check: { label: 'Verify', tone: 'warn', blurb: 'One source only, or sources disagree: confirm with the consulate before acting.' },
+};
+
 export type Role = 'owner' | 'admin' | 'advisor' | 'viewer';
 export const ROLES: readonly { key: Role; label: string; blurb: string }[] = [
   { key: 'owner', label: 'Owner', blurb: 'Full control including billing and deleting the organisation.' },

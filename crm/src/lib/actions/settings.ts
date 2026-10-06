@@ -55,3 +55,13 @@ export async function saveProcessingTimesAction(input: unknown): Promise<ActionR
     return ok(undefined);
   });
 }
+
+/** Turn automatic ClearEntry rulebook checklists on or off for new cases. */
+export async function setUseRulebookAction(input: unknown): Promise<ActionResult> {
+  const p = parse(z.object({ enabled: z.boolean() }), input);
+  if ('error' in p) return p.error;
+  return withOrg({ admin: true }, async ({ supabase, org }) => {
+    const { error } = await supabase.from('org_settings').update({ use_rulebook: p.data.enabled }).eq('org_id', org.id);
+    return error ? dbError(error) : ok(undefined);
+  });
+}

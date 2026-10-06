@@ -1,7 +1,7 @@
 import type { ActivityRow } from './types';
 import { stageLabel } from './domain';
 
-export type ActionGroup = 'stage' | 'decisions' | 'documents' | 'tasks' | 'assignment' | 'imports' | 'portal';
+export type ActionGroup = 'stage' | 'decisions' | 'documents' | 'tasks' | 'assignment' | 'imports' | 'portal' | 'rules';
 
 export const ACTION_GROUPS: { key: ActionGroup; label: string; types: string[] }[] = [
   { key: 'stage', label: 'Stage moves', types: ['stage_changed', 'case_created'] },
@@ -11,9 +11,10 @@ export const ACTION_GROUPS: { key: ActionGroup; label: string; types: string[] }
   { key: 'assignment', label: 'Assignments', types: ['case_assigned'] },
   { key: 'imports', label: 'Imports & exports', types: ['import_completed', 'export_created', 'report_generated'] },
   { key: 'portal', label: 'Applicant portal', types: ['portal_link_created', 'portal_link_revoked'] },
+  { key: 'rules', label: 'Rule changes', types: ['rule_changed'] },
 ];
 
-export type IconKey = 'plus' | 'stage' | 'gavel' | 'user' | 'file' | 'upload' | 'task' | 'check' | 'import' | 'export' | 'link' | 'dot';
+export type IconKey = 'plus' | 'stage' | 'gavel' | 'user' | 'file' | 'upload' | 'task' | 'check' | 'import' | 'export' | 'link' | 'rule' | 'dot';
 
 export interface Described {
   icon: IconKey;
@@ -50,6 +51,7 @@ export function describeEvent(e: Pick<ActivityRow, 'type' | 'payload'>, name: (i
     case 'report_generated': return { icon: 'export', before: `generated a ${s(p.name) || 'PDF'} report`, withCase: false };
     case 'portal_link_created': return { icon: 'link', before: 'created an applicant portal link for', withCase: true };
     case 'portal_link_revoked': return { icon: 'link', before: 'revoked the portal link for', withCase: true };
+    case 'rule_changed': return { icon: 'rule', before: 'flagged a rule change affecting', withCase: true, after: `: ${s(p.summary)}` };
     default: return { icon: 'dot', before: e.type.replace(/_/g, ' '), withCase: true };
   }
 }

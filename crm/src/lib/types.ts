@@ -1,4 +1,4 @@
-import type { CaseStage, ItemStatus, Role, VisaType } from './domain';
+import type { CaseStage, Confidence, ItemStatus, Role, Route, VisaType } from './domain';
 
 /** One row of the case_overview view (a case joined with its applicant, advisor and live risk). */
 export interface CaseRow {
@@ -12,6 +12,7 @@ export interface CaseRow {
   residence_country: string | null;
   destination: string;
   visa_type: VisaType;
+  route: Route | null;
   purpose: string | null;
   programme: string | null;
   intake: string | null;
@@ -73,6 +74,8 @@ export interface OrgSettings {
   high_buffer_days: number;
   medium_buffer_days: number;
   processing_times_confirmed: boolean;
+  /** Fill new cases from the ClearEntry rulebook when no own template matches. */
+  use_rulebook: boolean;
 }
 
 export interface ProcessingTime {
@@ -102,6 +105,11 @@ export interface ChecklistItem {
   sort_order: number;
   updated_at: string;
   updated_by: string | null;
+  /** Set when the item came from the ClearEntry rulebook. */
+  rule_id: string | null;
+  rule_version: number | null;
+  /** Set when the rulebook changed this rule after it was added; cleared when staff acknowledge it. */
+  rule_changed_at: string | null;
 }
 
 export interface ItemFile {
@@ -241,4 +249,84 @@ export interface Invitation {
   accepted_at: string | null;
   revoked_at: string | null;
   created_at: string;
+}
+
+// ---- ClearEntry rulebook (read-only, shared by every organisation) ---------------------------
+
+export interface RuleSource {
+  id: string;
+  kind: 'official' | 'secondary';
+  publisher: string;
+  published: string;
+  title: string;
+  url: string;
+}
+
+export interface RuleGuide {
+  id: string;
+  destination: string;
+  route: Route;
+  level: 'full' | 'basic';
+  title: string;
+  summary: string;
+  permit: string | null;
+  links: { label: string; url: string }[];
+  last_checked: string;
+}
+
+export interface RuleRequirement {
+  id: string;
+  guide_id: string;
+  kind: 'document' | 'step';
+  label: string;
+  detail: string | null;
+  required: boolean;
+  due_days_before_start: number | null;
+  sort_order: number;
+  nat_in: string[] | null;
+  nat_not_in: string[];
+  residence_in: string[] | null;
+  residence_not_in: string[];
+  confidence: Confidence;
+  source_ids: string[];
+  last_checked: string;
+  version: number;
+  active: boolean;
+}
+
+export interface RuleFact {
+  id: string;
+  guide_id: string;
+  kind: 'funds' | 'fee' | 'work' | 'post_study' | 'processing' | 'insurance' | 'salary' | 'duration' | 'note';
+  label: string;
+  value: string;
+  amount_eur: number | null;
+  confidence: Confidence;
+  source_ids: string[];
+  last_checked: string;
+  /** Targeting (present when read from the table; case_rule_facts already filters). */
+  nat_in?: string[] | null;
+  nat_not_in?: string[];
+  residence_in?: string[] | null;
+  residence_not_in?: string[];
+}
+
+export interface RuleChange {
+  id: string;
+  effective_on: string;
+  destinations: string[];
+  routes: Route[] | null;
+  nat_in: string[] | null;
+  summary: string;
+  detail: string | null;
+  severity: 'info' | 'action';
+  source_ids: string[];
+  requirement_ids: string[];
+  published_at: string;
+}
+
+export interface RulebookMeta {
+  version: string;
+  verified_on: string;
+  synced_at: string;
 }

@@ -22,7 +22,9 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { assignAdvisorAction, eraseApplicantAction, exportApplicantDataAction } from '@/lib/actions/cases';
 import { countryName } from '@/lib/countries';
-import { visaLabel } from '@/lib/domain';
+import { routeLabel, visaLabel } from '@/lib/domain';
+import { ConfidenceBadge, SourceLinks } from '@/components/rulebook/citations';
+import { useCaseRuleFacts, useRuleSources } from '@/lib/queries/rulebook';
 import { downloadBlob } from '@/lib/export';
 import { daysLabel, formatDate } from '@/lib/format';
 import { useIsHighlighted } from '@/lib/live/highlights';
@@ -42,6 +44,33 @@ function Fact({ label, children }: { label: string; children: React.ReactNode })
       <dt className="shrink-0 text-muted-foreground">{label}</dt>
       <dd className="min-w-0 text-right font-medium">{children}</dd>
     </div>
+  );
+}
+
+/** Funds, fees, work rights ... from the rulebook for this case's destination, route and nationality. */
+function KeyRules({ c }: { c: CaseRow }) {
+  const { data: facts, isLoading } = useCaseRuleFacts(c.id, [c.destination, c.route, c.nationality, c.residence_country]);
+  const { data: sources } = useRuleSources();
+  if (isLoading) return <Skeleton className="h-32" />;
+  if (!facts?.length) return null;
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Key rules</CardTitle>
+        <CardDescription>{countryName(c.destination)} · {routeLabel(c.route)}. <Link href="/rulebook" className="text-primary underline underline-offset-2 hover:no-underline">Full guide</Link></CardDescription>
+      </CardHeader>
+      <CardContent className="pt-0">
+        <dl className="divide-y">
+          {facts.map((f) => (
+            <div key={f.id} className="grid gap-1 py-2 text-sm">
+              <dt className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">{f.label} <ConfidenceBadge value={f.confidence} className="px-1.5 py-0 text-[10px]" /></dt>
+              <dd className="font-medium">{f.value}</dd>
+              <dd><SourceLinks ids={f.source_ids} sources={sources} /></dd>
+            </div>
+          ))}
+        </dl>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -165,6 +194,7 @@ export function CaseDetail({ caseId }: { caseId: string }) {
             <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
               <Destination code={c.destination} className="text-foreground" />
               <span>·</span><span>{visaLabel(c.visa_type)}</span>
+              {c.route && <><span>·</span><span>{routeLabel(c.route)}</span></>}
               {c.programme && <><span>·</span><span>{c.programme}</span></>}
               {c.intake && <Badge tone="outline">{c.intake}</Badge>}
               {c.tags.map((t) => <Badge key={t} tone="info">{t}</Badge>)}
@@ -210,6 +240,7 @@ export function CaseDetail({ caseId }: { caseId: string }) {
 
         <aside className="grid content-start gap-5">
           <RiskExplainer c={c} />
+          <KeyRules c={c} />
           <Card>
             <CardHeader><CardTitle>Details</CardTitle></CardHeader>
             <CardContent className="pt-0">

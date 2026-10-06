@@ -1,7 +1,7 @@
 'use client';
 
 import { useQueryClient } from '@tanstack/react-query';
-import { AlertTriangle, BadgeCheck, CalendarClock, ExternalLink, FileText, MessageSquare, Plus, RotateCcw, Trash2, Upload } from 'lucide-react';
+import { AlertTriangle, BadgeCheck, BookOpenCheck, CalendarClock, Check, ExternalLink, FileText, MessageSquare, Plus, RotateCcw, Trash2, Upload } from 'lucide-react';
 import { useRef, useState, useTransition } from 'react';
 import { toast } from 'sonner';
 import { ItemStatusBadge } from '@/components/app/badges';
@@ -16,24 +16,38 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input, Select, Textarea } from '@/components/ui/input';
 import { Field } from '@/components/ui/label';
 import {
-  addItemAction, applyChecklistAction, deleteFileAction, deleteItemAction, registerUploadAction, updateItemAction,
+  acknowledgeRuleChangeAction, addItemAction, applyChecklistAction, applyRulebookAction, deleteFileAction, deleteItemAction,
+  registerUploadAction, updateItemAction,
 } from '@/lib/actions/checklists';
+import { ConfidenceBadge, SourceLinks } from '@/components/rulebook/citations';
+import { useRequirementsById, useRuleSources, useRulebookMeta } from '@/lib/queries/rulebook';
+import Link from 'next/link';
 import { ALLOWED_MIME, MAX_UPLOAD_BYTES, safeFileName as safeName } from '@/lib/uploads';
 import { ITEM_STATUSES, REQUIREMENTS_NOTICE, SOURCE_STALE_DAYS, type ItemStatus } from '@/lib/domain';
 import { daysLabelFromToday, formatBytes, formatDate, todayIso } from '@/lib/format';
 import { useIsHighlighted } from '@/lib/live/highlights';
 import { useCaseTemplates, useFiles, useItems, useTemplates } from '@/lib/queries/case-data';
 import { getSupabaseBrowser } from '@/lib/supabase/client';
-import type { CaseRow, ChecklistItem, ItemFile } from '@/lib/types';
+import type { CaseRow, ChecklistItem, ItemFile, RuleRequirement, RuleSource } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
 
 function SourceNotice({ items, caseId }: { items: ChecklistItem[]; caseId: string }) {
   const { data: templates } = useCaseTemplates(items, caseId);
+  const { data: meta } = useRulebookMeta();
+  const fromRulebook = items.some((i) => i.rule_id);
   const today = Date.parse(todayIso());
   return (
     <div className="grid gap-2">
       <Alert tone="warn" title="Confirm requirements with the consulate">{REQUIREMENTS_NOTICE}</Alert>
+      {fromRulebook && (
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border bg-card px-3 py-2 text-sm">
+          <BookOpenCheck className="size-4 text-primary" aria-hidden />
+          <span className="font-medium">ClearEntry rulebook</span>
+          <span className="text-muted-foreground">Each item cites its official source below{meta ? ` · checked ${formatDate(meta.verified_on)}` : ''}</span>
+          <Link href="/rulebook" className="text-primary underline underline-offset-2 hover:no-underline">Open the rulebook</Link>
+        </div>
+      )}
       {(templates ?? []).map((t) => {
         const age = t.source_last_checked ? Math.floor((today - Date.parse(t.source_last_checked)) / 86_400_000) : null;
         const stale = age === null || age > SOURCE_STALE_DAYS;
@@ -55,7 +69,32 @@ function SourceNotice({ items, caseId }: { items: ChecklistItem[]; caseId: strin
   );
 }
 
-function ItemRow({ item, files, caseRow }: { item: ChecklistItem; files: ItemFile[]; caseRow: CaseRow }) {
+function RuleChanged({ item, rule, onDone }: { item: ChecklistItem; rule: RuleRequirement | undefined; onDone: () => void }) {
+  const { canWrite } = useOrg();
+  const [pending, start] = useTransition();
+  const differs = rule && (rule.label !== item.label || (rule.detail ?? '') !== (item.description ?? ''));
+  return (
+    <div className="mt-2 grid gap-1.5 rounded-lg border border-warn/40 bg-warn-bg/60 px-3 py-2 text-[13px]">
+      <p className="flex items-center gap-1.5 font-medium text-warn"><AlertTriangle className="size-3.5" /> The rulebook changed this requirement on {formatDate(item.rule_changed_at)}.</p>
+      {rule && !rule.active && <p>It is no longer part of the rulebook. Check whether the applicant still needs it.</p>}
+      {differs && rule.active && (
+        <p><span className="font-medium">Now:</span> {rule.label}{rule.detail ? ` — ${rule.detail}` : ''}</p>
+      )}
+      {canWrite && (
+        <div className="flex flex-wrap gap-2">
+          <Button size="xs" variant="outline" loading={pending} onClick={() => start(async () => {
+            const r = await acknowledgeRuleChangeAction(item.id);
+            if (!r.ok) toast.error(r.error); else onDone();
+          })}><Check /> Mark reviewed</Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ItemRow({ item, files, caseRow, rule, sources }: {
+  item: ChecklistItem; files: ItemFile[]; caseRow: CaseRow; rule?: RuleRequirement; sources?: Record<string, RuleSource>;
+}) {
   const { org, canWrite } = useOrg();
   const qc = useQueryClient();
   const { announce } = useLive();
@@ -101,6 +140,7 @@ function ItemRow({ item, files, caseRow }: { item: ChecklistItem; files: ItemFil
             <span className="font-medium">{item.label}</span>
             {!item.required && <Badge tone="neutral">Optional</Badge>}
             <ItemStatusBadge status={item.status} />
+            {rule && <ConfidenceBadge value={rule.confidence} />}
             {item.due_date && (
               <span className={cn('inline-flex items-center gap-1 text-xs', overdue ? 'font-medium text-danger' : 'text-muted-foreground')}>
                 {overdue ? <AlertTriangle className="size-3" /> : <CalendarClock className="size-3" />}
@@ -109,6 +149,8 @@ function ItemRow({ item, files, caseRow }: { item: ChecklistItem; files: ItemFil
             )}
           </div>
           {item.description && <p className="mt-0.5 text-[13px] text-muted-foreground">{item.description}</p>}
+          {rule && <SourceLinks ids={rule.source_ids} sources={sources} className="mt-1" />}
+          {item.rule_changed_at && <RuleChanged item={item} rule={rule} onDone={refresh} />}
           {item.comment && !commentOpen && <p className="mt-1.5 flex items-start gap-1.5 text-[13px]"><MessageSquare className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" /><span className="whitespace-pre-wrap">{item.comment}</span></p>}
           {files.length > 0 && (
             <ul className="mt-2 flex flex-wrap gap-2">
@@ -184,6 +226,8 @@ export function CaseChecklist({ caseRow }: { caseRow: CaseRow }) {
   const { data: items, isLoading } = useItems(caseRow.id);
   const { data: files } = useFiles(caseRow.id);
   const { data: templates } = useTemplates();
+  const { data: rulesById } = useRequirementsById((items ?? []).map((i) => i.rule_id).filter((x): x is string => Boolean(x)));
+  const { data: sources } = useRuleSources();
   const [addOpen, setAddOpen] = useState(false);
   const [applyOpen, setApplyOpen] = useState(false);
   const [pending, start] = useTransition();
@@ -196,6 +240,13 @@ export function CaseChecklist({ caseRow }: { caseRow: CaseRow }) {
   const list = items ?? [];
   const verified = list.filter((i) => i.required && i.status === 'verified').length;
   const required = list.filter((i) => i.required).length;
+  const changed = list.filter((i) => i.rule_changed_at).length;
+  const fillFromRulebook = () => start(async () => {
+    const r = await applyRulebookAction({ caseIds: [caseRow.id] });
+    if (!r.ok) toast.error(r.error);
+    else if (r.data.added === 0) toast.info(caseRow.route ? 'Nothing new: the checklist already has every rulebook item that applies, or this nationality needs no visa.' : 'Choose a route for this case first (Edit applicant → Route).');
+    else { toast.success(`Added ${r.data.added} items from the rulebook`); refresh(); }
+  });
 
   return (
     <div className="grid gap-4">
@@ -205,27 +256,36 @@ export function CaseChecklist({ caseRow }: { caseRow: CaseRow }) {
           {required > 0 ? <><strong className="text-foreground">{verified}</strong> of <strong className="text-foreground">{required}</strong> required documents verified</> : 'No required documents yet'}
         </p>
         {canWrite && (
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
+            <Button size="sm" variant="outline" loading={pending} onClick={fillFromRulebook}><BookOpenCheck /> Fill from rulebook</Button>
             <Button size="sm" variant="outline" onClick={() => setApplyOpen(true)}>Apply template</Button>
             <Button size="sm" onClick={() => setAddOpen(true)}><Plus /> Add item</Button>
           </div>
         )}
       </div>
+      {changed > 0 && (
+        <Alert tone="warn" title={`${changed} ${changed === 1 ? 'item has' : 'items have'} changed in the rulebook`}>
+          Review the flagged items below against the new requirement, then mark them reviewed.
+        </Alert>
+      )}
 
       {isLoading ? <Skeleton className="h-40" /> : list.length === 0 ? (
         <EmptyState icon={FileText} title="No checklist on this case yet" actions={canWrite && (
           <>
-            <Button onClick={() => start(async () => {
+            <Button onClick={fillFromRulebook} loading={pending}><BookOpenCheck /> Fill from ClearEntry rulebook</Button>
+            <Button variant="outline" onClick={() => start(async () => {
               const r = await applyChecklistAction({ caseIds: [caseRow.id] });
               if (!r.ok) toast.error(r.error); else if (r.data.added === 0) toast.info('No template matches this destination and visa type yet. Create one under Checklists.'); else { toast.success(`Added ${r.data.added} items`); refresh(); }
-            })} loading={pending}>Apply matching template</Button>
+            })} loading={pending}>Apply own template</Button>
             <Button variant="outline" onClick={() => setAddOpen(true)}>Add an item manually</Button>
           </>
         )}>
-          Checklists come from templates for this destination and visa type. Admins create them under <strong>Checklists</strong>; a matching one is applied automatically to new cases.
+          New cases are filled from the ClearEntry <strong>rulebook</strong> for their destination, route and nationality, unless one of your own templates under <strong>Checklists</strong> matches. EU/EEA citizens get no visa checklist.
         </EmptyState>
       ) : (
-        <ul className="grid gap-2.5">{list.map((i) => <ItemRow key={i.id} item={i} files={filesByItem(i.id)} caseRow={caseRow} />)}</ul>
+        <ul className="grid gap-2.5">{list.map((i) => (
+          <ItemRow key={i.id} item={i} files={filesByItem(i.id)} caseRow={caseRow} rule={i.rule_id ? rulesById?.[i.rule_id] : undefined} sources={sources} />
+        ))}</ul>
       )}
 
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
