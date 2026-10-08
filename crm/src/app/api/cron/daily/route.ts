@@ -1,6 +1,7 @@
 import { timingSafeEqual } from 'node:crypto';
 import { NextResponse, type NextRequest } from 'next/server';
 import { sendDigests } from '@/lib/digest';
+import { ensureRulebookSynced } from '@/lib/rulebook-sync';
 import { createSupabaseAdmin } from '@/lib/supabase/admin';
 
 export const runtime = 'nodejs';
@@ -21,7 +22,8 @@ function authorised(request: NextRequest): boolean {
  *  - refresh risk levels and raise "became high risk" alerts,
  *  - raise overdue document / task alerts,
  *  - purge expired rate-limit rows and old read notifications,
- *  - send the opt-in e-mail digest.
+ *  - send the opt-in e-mail digest,
+ *  - make sure the database has this deployment's rulebook.
  */
 export async function GET(request: NextRequest) {
   if (!process.env.CRON_SECRET) return NextResponse.json({ error: 'CRON_SECRET is not configured' }, { status: 503 });
@@ -30,5 +32,6 @@ export async function GET(request: NextRequest) {
   const { data: orgs, error } = await admin.rpc('run_maintenance', { p_org: null });
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   const digest = await sendDigests(admin);
-  return NextResponse.json({ ok: true, organisations: orgs, digest });
+  const rulebook = await ensureRulebookSynced({ force: true });
+  return NextResponse.json({ ok: true, organisations: orgs, digest, rulebook: rulebook.status });
 }
