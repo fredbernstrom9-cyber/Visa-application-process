@@ -37,6 +37,15 @@ export function pct(n: number | null | undefined, digits = 0): string {
   return n === null || n === undefined ? '—' : `${Number(n).toFixed(digits)}%`;
 }
 
+/**
+ * Share of required documents verified. The database leaves docs_pct empty for decided cases (they have no risk
+ * score), so fall back to the counters instead of showing "null%" or an empty bar for a fully verified file.
+ */
+export function docsPercent(c: { docs_pct: number | null; docs_total: number; docs_verified: number }): number | null {
+  if (c.docs_pct !== null && c.docs_pct !== undefined) return c.docs_pct;
+  return c.docs_total > 0 ? Math.round((c.docs_verified / c.docs_total) * 100) : null;
+}
+
 export function formatBytes(n: number | null | undefined): string {
   if (!n) return '';
   if (n < 1024) return `${n} B`;

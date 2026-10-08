@@ -34,7 +34,7 @@ import { countryName } from '@/lib/countries';
 import { STAGES, visaLabel, type CaseStage } from '@/lib/domain';
 import { CASE_EXPORT_HEADERS, caseExportRow, downloadTable } from '@/lib/export';
 import { filtersToParams, parseFilters, type CaseFilters } from '@/lib/filters';
-import { formatDate, daysLabel, relativeTime } from '@/lib/format';
+import { formatDate, daysLabel, docsPercent, relativeTime } from '@/lib/format';
 import { useIsHighlighted } from '@/lib/live/highlights';
 import { fetchAllCases, useCases, useMembers, useSavedViews, type SortKey } from '@/lib/queries/cases';
 import type { CaseRow } from '@/lib/types';
@@ -81,7 +81,7 @@ function DocsCell({ row }: { row: CaseRow }) {
   if (row.docs_total === 0) return <span className="text-xs text-muted-foreground">No checklist</span>;
   return (
     <div className="grid w-28 gap-1" title={`${row.docs_verified} of ${row.docs_total} required documents verified`}>
-      <Progress value={row.docs_pct ?? 0} label={`${row.docs_pct ?? 0}% of documents verified`} />
+      <Progress value={docsPercent(row) ?? 0} label={`${docsPercent(row) ?? 0}% of documents verified`} />
       <span className="text-xs text-muted-foreground">{row.docs_verified}/{row.docs_total} verified</span>
     </div>
   );

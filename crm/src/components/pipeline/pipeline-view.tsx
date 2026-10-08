@@ -26,7 +26,7 @@ import { changeStageAction } from '@/lib/actions/cases';
 import { flagEmoji, countryName } from '@/lib/countries';
 import { STAGES, type CaseStage } from '@/lib/domain';
 import { filtersToParams, parseFilters, type CaseFilters } from '@/lib/filters';
-import { daysLabel, formatDate } from '@/lib/format';
+import { daysLabel, docsPercent, formatDate } from '@/lib/format';
 import { useIsHighlighted } from '@/lib/live/highlights';
 import { fetchAllCases, sanitizeSearch } from '@/lib/queries/cases';
 import { getSupabaseBrowser } from '@/lib/supabase/client';
@@ -101,8 +101,8 @@ function CardBody({ c, compact }: { c: CaseRow; compact?: boolean }) {
           <RiskBadge level={c.risk_level} reason={c.risk_reason} showReason={false} className="mt-2" />
           <p className="mt-1.5 line-clamp-2 text-[11px] leading-snug text-muted-foreground">{c.risk_reason}</p>
           <div className="mt-2 flex items-center gap-2">
-            <Progress value={c.docs_pct ?? 0} className="h-1.5 flex-1" label="Documents verified" />
-            <span className="text-[11px] text-muted-foreground">{c.docs_total ? `${c.docs_pct}%` : 'no list'}</span>
+            <Progress value={docsPercent(c) ?? 0} className="h-1.5 flex-1" label="Documents verified" />
+            <span className="text-[11px] text-muted-foreground">{c.docs_total ? `${docsPercent(c)}%` : 'no list'}</span>
           </div>
           {c.start_date && <p className="mt-1.5 text-[11px] text-muted-foreground">Starts {formatDate(c.start_date)} · {daysLabel(c.days_to_start)}</p>}
         </>

@@ -5,6 +5,7 @@ import { computeRisk, DEFAULT_RISK_SETTINGS, type RiskInput } from '@/lib/risk';
 import { canUse, hasRoomFor, limitFor, PLAN_FEATURES, PLAN_LIMITS } from '@/lib/plans';
 import { countActiveFilters, filtersToParams, parseFilters, toRpcFilters } from '@/lib/filters';
 import { countryName, matchCountry, DESTINATIONS } from '@/lib/countries';
+import { docsPercent } from '@/lib/format';
 
 const base: RiskInput = { ...DEFAULT_RISK_SETTINGS, stage: 'documents', startDate: null, appointmentDate: null, submittedAt: null, docsTotal: 0, docsVerified: 0, today: '2026-06-01' };
 
@@ -81,5 +82,19 @@ describe('countries', () => {
   it('lists EU + Schengen destinations (31) and flags the two non-Schengen EU states', () => {
     expect(DESTINATIONS).toHaveLength(31);
     expect(DESTINATIONS.filter((d) => !d.schengen).map((d) => d.code).sort()).toEqual(['CY', 'IE']);
+  });
+});
+
+describe('docsPercent', () => {
+  it('uses the database value when present', () => {
+    expect(docsPercent({ docs_pct: 40, docs_total: 5, docs_verified: 2 })).toBe(40);
+    expect(docsPercent({ docs_pct: 0, docs_total: 5, docs_verified: 0 })).toBe(0);
+  });
+  it('falls back to the counters for decided cases (no risk score, no percentage)', () => {
+    expect(docsPercent({ docs_pct: null, docs_total: 7, docs_verified: 7 })).toBe(100);
+    expect(docsPercent({ docs_pct: null, docs_total: 6, docs_verified: 4 })).toBe(67);
+  });
+  it('is empty when there is no checklist at all', () => {
+    expect(docsPercent({ docs_pct: null, docs_total: 0, docs_verified: 0 })).toBeNull();
   });
 });
